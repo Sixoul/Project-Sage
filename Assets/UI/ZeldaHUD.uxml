@@ -1,0 +1,20 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/ZeldaHUD.uss?fileID=7433441132597879392&amp;guid=00000000000000000000000000000000&amp;type=3#ZeldaHUD" />
+    <ui:VisualElement name="HUD_Root" style="flex-grow: 1; width: 100%; height: 100%; position: absolute;">
+        <!-- Top Left Hearts -->
+        <ui:VisualElement name="HeartsContainer" style="position: absolute; top: 24px; left: 28px; flex-direction: row;" />
+        
+        <!-- Top Center Oxygen Meter (visible while swimming/diving) -->
+        <ui:VisualElement name="OxygenContainer" style="position: absolute; top: 35px; align-self: center; width: 220px; height: 18px; background-color: rgba(25, 38, 51, 0.85); border-width: 2px; border-color: rgb(51, 204, 255); display: none;">
+            <ui:VisualElement name="OxygenBarFill" style="width: 100%; height: 100%; background-color: rgb(51, 230, 102);" />
+        </ui:VisualElement>
+
+        <!-- Dynamic Z-Targeting Reticle -->
+        <ui:VisualElement name="ZTargetReticle" style="position: absolute; width: 60px; height: 60px; border-width: 4px; border-color: rgb(255, 230, 26); border-radius: 30px; display: none;" />
+
+        <!-- Bottom Right Action Prompts -->
+        <ui:VisualElement name="ActionPromptBox" style="position: absolute; bottom: 20px; right: 24px; background-color: rgba(0, 0, 0, 0.65); padding: 10px 14px; border-radius: 8px;">
+            <ui:Label text="WASD: Move | Space: Jump / Dodge&#10;LMB: Sword Combo | RMB: Shield Block&#10;Tab: Z-Target | E: Use Item&#10;Shift: Dive | Hold Q/Z/R: BotW Swap" style="color: rgb(230, 242, 255); -unity-font-style: bold; font-size: 13px;" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
