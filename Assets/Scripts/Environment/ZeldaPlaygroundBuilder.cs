@@ -148,8 +148,8 @@ namespace ZeldaOoT.Environment
             // 8. Destructible Wooden Crates (Bomb & Slash Tests)
             BuildCrateStack(arenaRoot.transform, new Vector3(6f, 0f, -18f), woodMat);
 
-            // 9. Sparring Dummies & Combat Enemies
-            BuildCombatDummies(arenaRoot.transform, new Vector3(0f, 0f, -2f));
+            // 9. Sparring Dummies & Combat Enemies (Placed across the central ring)
+            BuildCombatDummies(arenaRoot.transform, new Vector3(0f, 0f, 2f));
 
             // 10. Global Death Floor Hazard (Failsafe void catching & respawn)
             GameObject deathFloorObj = GameObject.CreatePrimitive(PrimitiveType.Cube);

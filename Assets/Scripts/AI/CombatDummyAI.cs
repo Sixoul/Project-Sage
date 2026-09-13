@@ -70,6 +70,9 @@ namespace ZeldaOoT.AI
             {
                 playerTarget = player.transform;
             }
+
+            // Grace period on spawn before initiating first attack
+            lastAttackTime = Time.time + 3.0f;
         }
 
         private void Update()

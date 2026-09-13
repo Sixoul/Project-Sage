@@ -47,15 +47,30 @@ namespace ZeldaOoT.CameraRig
         private void Start()
         {
             currentDist = defaultDistance;
-            currentCollisionDist = defaultDistance;
+            currentCollisionDist = Mathf.Max(minDistance, defaultDistance);
+            EnsureTarget();
+
+            currentYaw = transform.eulerAngles.y;
+            inputReader = ZeldaInputReader.Instance;
+        }
+
+        private void EnsureTarget()
+        {
+            if (target == null)
+            {
+                var player = GameObject.FindWithTag("Player");
+                if (player == null) player = GameObject.Find("Player_Link");
+                if (player != null)
+                {
+                    target = player.transform;
+                }
+            }
+
             if (target != null)
             {
                 smoothedFocusPoint = target.position + targetOffset;
                 zTargetSystem = target.GetComponent<ZTargetSystem>();
             }
-
-            currentYaw = transform.eulerAngles.y;
-            inputReader = ZeldaInputReader.Instance;
         }
 
         public void SetTarget(Transform newTarget)
@@ -70,7 +85,11 @@ namespace ZeldaOoT.CameraRig
 
         private void LateUpdate()
         {
-            if (target == null) return;
+            if (target == null)
+            {
+                EnsureTarget();
+                if (target == null) return;
+            }
             if (inputReader == null) inputReader = ZeldaInputReader.Instance;
 
             Vector3 targetFocus = target.position + targetOffset;
@@ -124,7 +143,7 @@ namespace ZeldaOoT.CameraRig
 
             // Calculate backward direction from focus point
             Vector3 backDir = rotation * Vector3.back;
-            float desiredDist = currentDist;
+            float desiredDist = Mathf.Clamp(currentDist, minDistance, maxDistance);
 
             // Start spherecast outside the player's clearance sphere (0.65m) to NEVER collide with player
             float playerClearance = 0.65f;
@@ -133,24 +152,28 @@ namespace ZeldaOoT.CameraRig
 
             float targetDist = desiredDist;
 
-            RaycastHit[] hits = Physics.SphereCastAll(castOrigin, collisionRadius, backDir, castDistance, collisionLayers, QueryTriggerInteraction.Ignore);
-            float closestHitDist = float.MaxValue;
-
-            foreach (var hit in hits)
+            // Only spherecast if castDistance is valid
+            if (castDistance > 0.01f)
             {
-                // Ignore the player, player children (weapons, shields), or triggers
-                if (target != null && (hit.transform == target || hit.transform.IsChildOf(target))) continue;
-                if (hit.collider.isTrigger) continue;
+                RaycastHit[] hits = Physics.SphereCastAll(castOrigin, collisionRadius, backDir, castDistance, collisionLayers, QueryTriggerInteraction.Ignore);
+                float closestHitDist = float.MaxValue;
 
-                if (hit.distance < closestHitDist)
+                foreach (var hit in hits)
                 {
-                    closestHitDist = hit.distance;
-                }
-            }
+                    // Ignore the player, player children (weapons, shields), or triggers
+                    if (target != null && (hit.transform == target || hit.transform.IsChildOf(target))) continue;
+                    if (hit.collider.isTrigger) continue;
 
-            if (closestHitDist < float.MaxValue)
-            {
-                targetDist = Mathf.Clamp(playerClearance + closestHitDist - 0.15f, minDistance, maxDistance);
+                    if (hit.distance < closestHitDist)
+                    {
+                        closestHitDist = hit.distance;
+                    }
+                }
+
+                if (closestHitDist < float.MaxValue)
+                {
+                    targetDist = Mathf.Clamp(playerClearance + closestHitDist - 0.15f, minDistance, maxDistance);
+                }
             }
 
             // Asymmetric damping: snap in quickly when obstacle appears, ease back out smoothly to prevent jitter
@@ -163,10 +186,22 @@ namespace ZeldaOoT.CameraRig
                 currentCollisionDist = Mathf.Lerp(currentCollisionDist, targetDist, 6f * Time.deltaTime);
             }
 
-            Vector3 finalPos = smoothedFocusPoint + backDir * currentCollisionDist;
+            // Always enforce minimum distance to avoid zero-length vector or camera clipping inside player
+            currentCollisionDist = Mathf.Clamp(currentCollisionDist, minDistance, maxDistance);
 
+            Vector3 finalPos = smoothedFocusPoint + backDir * currentCollisionDist;
             transform.position = finalPos;
-            transform.LookAt(smoothedFocusPoint);
+
+            // Guard against NaN look-rotation
+            Vector3 lookDir = smoothedFocusPoint - finalPos;
+            if (lookDir.sqrMagnitude > 0.001f)
+            {
+                transform.rotation = Quaternion.LookRotation(lookDir);
+            }
+            else
+            {
+                transform.rotation = rotation;
+            }
         }
     }
 }
