@@ -109,10 +109,12 @@ namespace ZeldaOoT.VFX
             sparkObj.transform.rotation = Quaternion.LookRotation(normal != Vector3.zero ? normal : Vector3.up);
 
             ParticleSystem psComp = sparkObj.AddComponent<ParticleSystem>();
+            psComp.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             var renderer = sparkObj.GetComponent<ParticleSystemRenderer>();
             if (particleAdditiveMat != null) renderer.material = particleAdditiveMat;
 
             var main = psComp.main;
+            main.playOnAwake = false;
             main.loop = false;
             main.duration = 0.25f;
             main.startLifetime = new ParticleSystem.MinMaxCurve(0.12f, 0.28f);
@@ -162,10 +164,12 @@ namespace ZeldaOoT.VFX
             blockObj.transform.rotation = Quaternion.LookRotation(normal != Vector3.zero ? normal : Vector3.up);
 
             ParticleSystem psComp = blockObj.AddComponent<ParticleSystem>();
+            psComp.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             var renderer = blockObj.GetComponent<ParticleSystemRenderer>();
             if (particleAdditiveMat != null) renderer.material = particleAdditiveMat;
 
             var main = psComp.main;
+            main.playOnAwake = false;
             main.loop = false;
             main.duration = 0.3f;
             main.startLifetime = new ParticleSystem.MinMaxCurve(0.18f, 0.38f);
@@ -213,12 +217,14 @@ namespace ZeldaOoT.VFX
             waveObj.transform.position = position + Vector3.up * 0.35f;
 
             ParticleSystem psComp = waveObj.AddComponent<ParticleSystem>();
+            psComp.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             var renderer = waveObj.GetComponent<ParticleSystemRenderer>();
             if (particleAdditiveMat != null) renderer.material = particleAdditiveMat;
 
             Color waveColor = level == 2 ? new Color(0.2f, 0.85f, 1f) : new Color(0.3f, 1f, 0.45f);
 
             var main = psComp.main;
+            main.playOnAwake = false;
             main.loop = false;
             main.duration = 0.35f;
             main.startLifetime = 0.3f;
@@ -277,10 +283,12 @@ namespace ZeldaOoT.VFX
 
             // Child 1: Fire & Flash Core
             ParticleSystem psFlash = boomObj.AddComponent<ParticleSystem>();
+            psFlash.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             var rendFlash = boomObj.GetComponent<ParticleSystemRenderer>();
             if (particleAdditiveMat != null) rendFlash.material = particleAdditiveMat;
 
             var mainF = psFlash.main;
+            mainF.playOnAwake = false;
             mainF.loop = false;
             mainF.duration = 0.4f;
             mainF.startLifetime = new ParticleSystem.MinMaxCurve(0.2f, 0.4f);
@@ -311,10 +319,12 @@ namespace ZeldaOoT.VFX
             GameObject debrisObj = new GameObject("ExplosionDebris");
             debrisObj.transform.SetParent(boomObj.transform, false);
             ParticleSystem psDebris = debrisObj.AddComponent<ParticleSystem>();
+            psDebris.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             var rendDebris = debrisObj.GetComponent<ParticleSystemRenderer>();
             if (particleAlphaMat != null) rendDebris.material = particleAlphaMat;
 
             var mainD = psDebris.main;
+            mainD.playOnAwake = false;
             mainD.loop = false;
             mainD.duration = 0.6f;
             mainD.startLifetime = new ParticleSystem.MinMaxCurve(0.4f, 0.8f);
@@ -354,10 +364,12 @@ namespace ZeldaOoT.VFX
             splashObj.transform.position = position;
 
             ParticleSystem psComp = splashObj.AddComponent<ParticleSystem>();
+            psComp.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             var renderer = splashObj.GetComponent<ParticleSystemRenderer>();
             if (particleAdditiveMat != null) renderer.material = particleAdditiveMat;
 
             var main = psComp.main;
+            main.playOnAwake = false;
             main.loop = false;
             main.duration = 0.45f;
             main.startLifetime = new ParticleSystem.MinMaxCurve(0.35f, 0.65f);
@@ -408,10 +420,12 @@ namespace ZeldaOoT.VFX
             bubbleObj.transform.position = position;
 
             ParticleSystem psComp = bubbleObj.AddComponent<ParticleSystem>();
+            psComp.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             var renderer = bubbleObj.GetComponent<ParticleSystemRenderer>();
             if (particleAdditiveMat != null) renderer.material = particleAdditiveMat;
 
             var main = psComp.main;
+            main.playOnAwake = false;
             main.loop = false;
             main.duration = 0.5f;
             main.startLifetime = new ParticleSystem.MinMaxCurve(0.5f, 1.1f);
