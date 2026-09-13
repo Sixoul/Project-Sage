@@ -230,7 +230,7 @@ namespace ZeldaOoT.VFX
 
             var emission = psComp.emission;
             emission.rateOverTime = 0;
-            int particleCount = level == 2 ? 64 : 42;
+            short particleCount = (short)(level == 2 ? 64 : 42);
             emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0f, particleCount) });
 
             var shape = psComp.shape;
@@ -369,7 +369,9 @@ namespace ZeldaOoT.VFX
 
             var emission = psComp.emission;
             emission.rateOverTime = 0;
-            emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0f, Mathf.RoundToInt(28 * scale), Mathf.RoundToInt(42 * scale)) });
+            short minSplash = (short)Mathf.Clamp(Mathf.RoundToInt(28 * scale), 1, short.MaxValue);
+            short maxSplash = (short)Mathf.Clamp(Mathf.RoundToInt(42 * scale), 1, short.MaxValue);
+            emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0f, minSplash, maxSplash) });
 
             var shape = psComp.shape;
             shape.shapeType = ParticleSystemShapeType.Cone;
@@ -421,7 +423,7 @@ namespace ZeldaOoT.VFX
 
             var emission = psComp.emission;
             emission.rateOverTime = 0;
-            emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0f, count) });
+            emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0f, (short)count) });
 
             var shape = psComp.shape;
             shape.shapeType = ParticleSystemShapeType.Sphere;
