@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using ZeldaOoT.Player;
+using ZeldaOoT.VFX;
 
 namespace ZeldaOoT.Combat
 {
@@ -15,7 +16,7 @@ namespace ZeldaOoT.Combat
         [SerializeField] private MeleeHitbox activeHitbox;
         [SerializeField] private float baseDamage = 2f;
         [SerializeField] private float comboResetTime = 0.6f;
-        [SerializeField] private float maxBlockAngle = 65f; // Frontal arc: 130 degrees total
+        [SerializeField] private float maxBlockAngle = 85f; // Frontal arc: 170 degrees total
 
         public bool IsAttacking { get; private set; }
         public bool IsBlocking { get; private set; }
@@ -48,15 +49,15 @@ namespace ZeldaOoT.Combat
             if (healthSystem != null)
             {
                 // Hook into damage handling to intercept with shield block
-                healthSystem.OnDamaged += HandleDamageAttempt;
+                healthSystem.DamageFilter = CheckShieldBlock;
             }
         }
 
         private void OnDestroy()
         {
-            if (healthSystem != null)
+            if (healthSystem != null && healthSystem.DamageFilter == CheckShieldBlock)
             {
-                healthSystem.OnDamaged -= HandleDamageAttempt;
+                healthSystem.DamageFilter = null;
             }
         }
 
@@ -328,69 +329,46 @@ namespace ZeldaOoT.Combat
 
         private void CreateSpinWaveEffect(float radius, int level)
         {
-            GameObject wave = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            wave.name = "SpinAttackWave";
-            wave.transform.position = transform.position + Vector3.up * 0.4f;
-            wave.transform.localScale = new Vector3(radius * 2f, 0.05f, radius * 2f);
-
-            var col = wave.GetComponent<Collider>();
-            if (col != null) Destroy(col);
-
-            var mr = wave.GetComponent<MeshRenderer>();
-            if (mr != null)
+            if (ZeldaVFXManager.Instance != null)
             {
-                var mat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-                Color waveColor = level == 2 ? new Color(0.2f, 0.85f, 1f) : new Color(0.3f, 1f, 0.4f); // Cyan Great Spin vs Green Spin
-                mat.color = waveColor;
-                mat.EnableKeyword("_EMISSION");
-                mat.SetColor("_EmissionColor", waveColor * 4f);
-                mr.material = mat;
+                ZeldaVFXManager.Instance.PlaySpinWave(transform.position, radius, level);
             }
-
-            Destroy(wave, 0.28f);
         }
 
-        private void HandleDamageAttempt(DamageInfo info)
+        private bool CheckShieldBlock(DamageInfo info)
         {
-            // If blocking and attack came from the front, deflect it and negate damage
+            // If blocking and attack came from the front, deflect it and negate damage completely
             if (IsBlocking && info.CanBeBlocked)
             {
                 Vector3 toAttacker = info.Attacker != null ? (info.Attacker.transform.position - transform.position) : -info.HitDirection;
                 toAttacker.y = 0f;
+                if (toAttacker.sqrMagnitude < 0.001f)
+                {
+                    toAttacker = -info.HitDirection;
+                    toAttacker.y = 0f;
+                }
+
                 float angle = Vector3.Angle(transform.forward, toAttacker);
 
                 if (angle <= maxBlockAngle)
                 {
-                    // Blocked! Heal back the damage taken
-                    healthSystem.Heal(info.Amount);
+                    // Blocked! Trigger block event
                     OnBlockSuccess?.Invoke(info.HitPoint);
 
-                    // Create blue shield deflect spark
-                    CreateBlockSpark(info.HitPoint != Vector3.zero ? info.HitPoint : transform.position + transform.forward * 0.8f + Vector3.up * 1f);
+                    // Create blue shield deflect spark via Particle System
+                    Vector3 sparkPoint = info.HitPoint != Vector3.zero 
+                        ? info.HitPoint 
+                        : (transform.position + transform.forward * 0.7f + Vector3.up * 1f);
+
+                    if (ZeldaVFXManager.Instance != null)
+                    {
+                        ZeldaVFXManager.Instance.PlayBlockSpark(sparkPoint, -transform.forward);
+                    }
+
+                    return true; // Completely negate incoming damage!
                 }
             }
-        }
-
-        private void CreateBlockSpark(Vector3 point)
-        {
-            GameObject spark = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            spark.name = "BlockDeflectSpark";
-            spark.transform.position = point;
-            spark.transform.localScale = Vector3.one * 0.45f;
-            var col = spark.GetComponent<Collider>();
-            if (col != null) Destroy(col);
-
-            var mr = spark.GetComponent<MeshRenderer>();
-            if (mr != null)
-            {
-                var mat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-                mat.color = new Color(0.2f, 0.7f, 1f, 1f); // Zelda shield blue deflect flash
-                mat.EnableKeyword("_EMISSION");
-                mat.SetColor("_EmissionColor", Color.cyan * 3f);
-                mr.material = mat;
-            }
-
-            Destroy(spark, 0.15f);
+            return false;
         }
     }
 }

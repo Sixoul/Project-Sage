@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using ZeldaOoT.Player;
 using ZeldaOoT.Combat;
+using ZeldaOoT.VFX;
 
 namespace ZeldaOoT.Water
 {
@@ -262,46 +263,18 @@ namespace ZeldaOoT.Water
 
         private void CreateWaterSplash(Vector3 pos)
         {
-            GameObject splash = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            splash.name = "WaterSplashRing";
-            splash.transform.position = pos;
-            splash.transform.localScale = new Vector3(2.2f, 0.03f, 2.2f);
-
-            var col = splash.GetComponent<Collider>();
-            if (col != null) Destroy(col);
-
-            var mr = splash.GetComponent<MeshRenderer>();
-            if (mr != null)
+            if (ZeldaVFXManager.Instance != null)
             {
-                var mat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-                mat.color = new Color(0.85f, 0.96f, 1f, 0.85f);
-                mat.EnableKeyword("_EMISSION");
-                mat.SetColor("_EmissionColor", Color.white * 1.8f);
-                mr.material = mat;
+                ZeldaVFXManager.Instance.PlayWaterSplash(pos);
             }
-
-            Destroy(splash, 0.4f);
         }
 
         private void CreateBubble(Vector3 pos)
         {
-            GameObject bubble = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            bubble.name = "DiveBubble";
-            bubble.transform.position = pos;
-            bubble.transform.localScale = Vector3.one * UnityEngine.Random.Range(0.09f, 0.18f);
-
-            var col = bubble.GetComponent<Collider>();
-            if (col != null) Destroy(col);
-
-            var mr = bubble.GetComponent<MeshRenderer>();
-            if (mr != null)
+            if (ZeldaVFXManager.Instance != null)
             {
-                var mat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-                mat.color = new Color(0.7f, 0.92f, 1f, 0.65f);
-                mr.material = mat;
+                ZeldaVFXManager.Instance.PlayWaterBubble(pos);
             }
-
-            Destroy(bubble, 0.9f);
         }
     }
 }

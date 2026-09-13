@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using ZeldaOoT.Combat;
+using ZeldaOoT.VFX;
 
 namespace ZeldaOoT.Items
 {
@@ -64,24 +65,11 @@ namespace ZeldaOoT.Items
 
         private void Explode()
         {
-            // Explosion visual sphere
-            GameObject boom = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            boom.name = "ExplosionVisual";
-            boom.transform.position = transform.position;
-            boom.transform.localScale = Vector3.one * (explosionRadius * 1.8f);
-            var col = boom.GetComponent<Collider>();
-            if (col != null) Destroy(col);
-
-            var mr = boom.GetComponent<MeshRenderer>();
-            if (mr != null)
+            // Explosion visual particles
+            if (ZeldaVFXManager.Instance != null)
             {
-                var mat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-                mat.color = new Color(1f, 0.5f, 0.1f, 0.8f);
-                mat.EnableKeyword("_EMISSION");
-                mat.SetColor("_EmissionColor", new Color(1f, 0.4f, 0.1f) * 4f);
-                mr.material = mat;
+                ZeldaVFXManager.Instance.PlayBombExplosion(transform.position);
             }
-            Destroy(boom, 0.25f);
 
             // Blast damage to nearby damageables and physics rigidbodies
             Collider[] hits = Physics.OverlapSphere(transform.position, explosionRadius);

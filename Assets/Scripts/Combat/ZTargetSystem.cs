@@ -17,8 +17,24 @@ namespace ZeldaOoT.Combat
         [SerializeField] private LayerMask obstacleMask = 1; // Default layer
 
         public Transform CurrentTarget { get; private set; }
+        public LockOnTarget CurrentLockOnTarget { get; private set; }
         public IDamageable CurrentDamageable { get; private set; }
         public bool IsLockedOn => CurrentTarget != null && (CurrentDamageable == null || CurrentDamageable.IsAlive);
+
+        public Vector3 TargetAimPosition
+        {
+            get
+            {
+                if (CurrentLockOnTarget != null) return CurrentLockOnTarget.AimPosition;
+                if (CurrentTarget != null)
+                {
+                    var lockable = CurrentTarget.GetComponentInParent<LockOnTarget>();
+                    if (lockable != null) return lockable.AimPosition;
+                    return CurrentTarget.position + Vector3.up * 1.25f;
+                }
+                return Vector3.zero;
+            }
+        }
 
         public event Action<Transform> OnTargetLocked;
         public event Action OnTargetLost;
@@ -69,6 +85,7 @@ namespace ZeldaOoT.Combat
 
             Collider[] hits = Physics.OverlapSphere(transform.position, lockOnRadius, targetMask);
             Transform bestTarget = null;
+            LockOnTarget bestLockable = null;
             float bestScore = float.MaxValue;
 
             foreach (var hit in hits)
@@ -105,6 +122,7 @@ namespace ZeldaOoT.Combat
                     {
                         bestScore = score;
                         bestTarget = targetT;
+                        bestLockable = lockable;
                         CurrentDamageable = damageable;
                     }
                 }
@@ -113,6 +131,7 @@ namespace ZeldaOoT.Combat
             if (bestTarget != null)
             {
                 CurrentTarget = bestTarget;
+                CurrentLockOnTarget = bestLockable;
                 OnTargetLocked?.Invoke(CurrentTarget);
             }
         }
@@ -120,6 +139,7 @@ namespace ZeldaOoT.Combat
         public void ClearTarget()
         {
             CurrentTarget = null;
+            CurrentLockOnTarget = null;
             CurrentDamageable = null;
             OnTargetLost?.Invoke();
         }

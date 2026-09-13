@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using ZeldaOoT.VFX;
 
 namespace ZeldaOoT.Combat
 {
@@ -63,31 +64,17 @@ namespace ZeldaOoT.Combat
                 DamageInfo dmg = new DamageInfo(currentDamage, hitPoint, hitDir, currentKnockback, attackerOwner, true);
                 damageable.TakeDamage(dmg);
 
-                // Spawn simple hit spark / flash effect
-                CreateHitSpark(hitPoint);
+                // Spawn hit spark particle effect
+                CreateHitSpark(hitPoint, -hitDir);
             }
         }
 
-        private void CreateHitSpark(Vector3 point)
+        private void CreateHitSpark(Vector3 point, Vector3 normal)
         {
-            GameObject spark = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            spark.name = "HitSpark";
-            spark.transform.position = point;
-            spark.transform.localScale = Vector3.one * 0.35f;
-            var col = spark.GetComponent<Collider>();
-            if (col != null) Destroy(col);
-
-            var mr = spark.GetComponent<MeshRenderer>();
-            if (mr != null)
+            if (ZeldaVFXManager.Instance != null)
             {
-                var mat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-                mat.color = new Color(1f, 0.9f, 0.2f, 1f); // Zelda classic yellow/white flash
-                mat.EnableKeyword("_EMISSION");
-                mat.SetColor("_EmissionColor", Color.yellow * 2f);
-                mr.material = mat;
+                ZeldaVFXManager.Instance.PlayHitSpark(point, normal);
             }
-
-            Destroy(spark, 0.12f);
         }
     }
 }

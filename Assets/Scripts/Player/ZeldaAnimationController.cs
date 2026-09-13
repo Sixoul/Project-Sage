@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using ZeldaOoT.Combat;
 using ZeldaOoT.Water;
+using ZeldaOoT.VFX;
 
 namespace ZeldaOoT.Player
 {
@@ -351,7 +352,8 @@ namespace ZeldaOoT.Player
         {
             if (shieldArm != null)
             {
-                shieldArm.localRotation = isBlocking ? Quaternion.Euler(-60f, 25f, -15f) : initialShieldRot;
+                // Bring shield arm up and forward across the chest facing forward (+X brings arm up and forward, -Y angles across chest)
+                shieldArm.localRotation = isBlocking ? Quaternion.Euler(55f, -30f, 15f) : initialShieldRot;
             }
         }
 
@@ -493,26 +495,11 @@ namespace ZeldaOoT.Player
 
         private void CreateChargeSpark(int level)
         {
-            GameObject spark = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            spark.name = "ChargeSpark";
-            spark.transform.position = (swordArm != null ? swordArm.position : transform.position) + transform.forward * 0.6f + Random.insideUnitSphere * 0.25f;
-            spark.transform.localScale = Vector3.one * Random.Range(0.08f, 0.16f);
-
-            var col = spark.GetComponent<Collider>();
-            if (col != null) Destroy(col);
-
-            var mr = spark.GetComponent<MeshRenderer>();
-            if (mr != null)
+            Vector3 sparkPos = (swordArm != null ? swordArm.position : transform.position) + transform.forward * 0.6f + Random.insideUnitSphere * 0.2f;
+            if (ZeldaVFXManager.Instance != null)
             {
-                var mat = new Material(Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard"));
-                Color c = level == 2 ? new Color(0.2f, 0.9f, 1f) : new Color(1f, 0.9f, 0.2f);
-                mat.color = c;
-                mat.EnableKeyword("_EMISSION");
-                mat.SetColor("_EmissionColor", c * 3.5f);
-                mr.material = mat;
+                ZeldaVFXManager.Instance.PlayHitSpark(sparkPos, Random.onUnitSphere);
             }
-
-            Destroy(spark, 0.16f);
         }
 
         private void HandleSideHopAnim(bool isRight)

@@ -23,6 +23,7 @@ namespace ZeldaOoT.UI
         private VisualElement oxygenContainer;
         private VisualElement oxygenBarFill;
         private VisualElement zTargetReticle;
+        private VisualElement rotatingReticleRing;
         private Label actionPromptLabel;
 
         private HealthSystem playerHealth;
@@ -128,29 +129,111 @@ namespace ZeldaOoT.UI
                 }
             }
 
-            // 3. Z-Targeting Reticle (Iconic yellow fairy brackets)
+            // 3. Z-Targeting Reticle (Polished Rotating Crosshair)
             zTargetReticle = root.Q<VisualElement>("ZTargetReticle");
             if (zTargetReticle == null)
             {
                 zTargetReticle = new VisualElement();
                 zTargetReticle.name = "ZTargetReticle";
                 zTargetReticle.style.position = Position.Absolute;
-                zTargetReticle.style.width = 60;
-                zTargetReticle.style.height = 60;
-                zTargetReticle.style.borderTopWidth = 4;
-                zTargetReticle.style.borderBottomWidth = 4;
-                zTargetReticle.style.borderLeftWidth = 4;
-                zTargetReticle.style.borderRightWidth = 4;
-                Color reticleYellow = new Color(1f, 0.9f, 0.1f, 0.95f);
-                zTargetReticle.style.borderTopColor = reticleYellow;
-                zTargetReticle.style.borderBottomColor = reticleYellow;
-                zTargetReticle.style.borderLeftColor = reticleYellow;
-                zTargetReticle.style.borderRightColor = reticleYellow;
-                zTargetReticle.style.borderTopLeftRadius = 30;
-                zTargetReticle.style.borderTopRightRadius = 30;
-                zTargetReticle.style.borderBottomLeftRadius = 30;
-                zTargetReticle.style.borderBottomRightRadius = 30;
+                zTargetReticle.style.width = 64;
+                zTargetReticle.style.height = 64;
+                zTargetReticle.style.alignItems = Align.Center;
+                zTargetReticle.style.justifyContent = Justify.Center;
                 zTargetReticle.style.display = DisplayStyle.None;
+
+                // Rotating Crosshair Ring
+                rotatingReticleRing = new VisualElement();
+                rotatingReticleRing.name = "RotatingCrosshairRing";
+                rotatingReticleRing.style.position = Position.Absolute;
+                rotatingReticleRing.style.width = 64;
+                rotatingReticleRing.style.height = 64;
+                rotatingReticleRing.style.alignItems = Align.Center;
+                rotatingReticleRing.style.justifyContent = Justify.Center;
+
+                // Circular outer ring
+                VisualElement outerRing = new VisualElement();
+                outerRing.style.position = Position.Absolute;
+                outerRing.style.width = 46;
+                outerRing.style.height = 46;
+                outerRing.style.borderTopWidth = 1.5f;
+                outerRing.style.borderBottomWidth = 1.5f;
+                outerRing.style.borderLeftWidth = 1.5f;
+                outerRing.style.borderRightWidth = 1.5f;
+                Color ringColor = new Color(1f, 0.85f, 0.2f, 0.55f);
+                outerRing.style.borderTopColor = ringColor;
+                outerRing.style.borderBottomColor = ringColor;
+                outerRing.style.borderLeftColor = ringColor;
+                outerRing.style.borderRightColor = ringColor;
+                outerRing.style.borderTopLeftRadius = 23;
+                outerRing.style.borderTopRightRadius = 23;
+                outerRing.style.borderBottomLeftRadius = 23;
+                outerRing.style.borderBottomRightRadius = 23;
+                rotatingReticleRing.Add(outerRing);
+
+                Color crosshairColor = new Color(1f, 0.92f, 0.15f, 0.95f);
+
+                // 4 Crosshair Tick Marks (Top, Bottom, Left, Right)
+                VisualElement tickTop = new VisualElement();
+                tickTop.style.position = Position.Absolute;
+                tickTop.style.top = 0;
+                tickTop.style.left = 30.5f;
+                tickTop.style.width = 3;
+                tickTop.style.height = 12;
+                tickTop.style.backgroundColor = crosshairColor;
+                tickTop.style.borderTopLeftRadius = 1.5f;
+                tickTop.style.borderTopRightRadius = 1.5f;
+                rotatingReticleRing.Add(tickTop);
+
+                VisualElement tickBottom = new VisualElement();
+                tickBottom.style.position = Position.Absolute;
+                tickBottom.style.bottom = 0;
+                tickBottom.style.left = 30.5f;
+                tickBottom.style.width = 3;
+                tickBottom.style.height = 12;
+                tickBottom.style.backgroundColor = crosshairColor;
+                tickBottom.style.borderBottomLeftRadius = 1.5f;
+                tickBottom.style.borderBottomRightRadius = 1.5f;
+                rotatingReticleRing.Add(tickBottom);
+
+                VisualElement tickLeft = new VisualElement();
+                tickLeft.style.position = Position.Absolute;
+                tickLeft.style.left = 0;
+                tickLeft.style.top = 30.5f;
+                tickLeft.style.width = 12;
+                tickLeft.style.height = 3;
+                tickLeft.style.backgroundColor = crosshairColor;
+                tickLeft.style.borderTopLeftRadius = 1.5f;
+                tickLeft.style.borderBottomLeftRadius = 1.5f;
+                rotatingReticleRing.Add(tickLeft);
+
+                VisualElement tickRight = new VisualElement();
+                tickRight.style.position = Position.Absolute;
+                tickRight.style.right = 0;
+                tickRight.style.top = 30.5f;
+                tickRight.style.width = 12;
+                tickRight.style.height = 3;
+                tickRight.style.backgroundColor = crosshairColor;
+                tickRight.style.borderTopRightRadius = 1.5f;
+                tickRight.style.borderBottomRightRadius = 1.5f;
+                rotatingReticleRing.Add(tickRight);
+
+                zTargetReticle.Add(rotatingReticleRing);
+
+                // Central Aiming Pip / Dot
+                VisualElement centerPip = new VisualElement();
+                centerPip.style.position = Position.Absolute;
+                centerPip.style.width = 6;
+                centerPip.style.height = 6;
+                centerPip.style.left = 29;
+                centerPip.style.top = 29;
+                centerPip.style.backgroundColor = new Color(1f, 1f, 0.5f, 0.95f);
+                centerPip.style.borderTopLeftRadius = 3;
+                centerPip.style.borderTopRightRadius = 3;
+                centerPip.style.borderBottomLeftRadius = 3;
+                centerPip.style.borderBottomRightRadius = 3;
+                zTargetReticle.Add(centerPip);
+
                 root.Add(zTargetReticle);
             }
 
@@ -173,7 +256,7 @@ namespace ZeldaOoT.UI
                 promptBox.style.borderBottomLeftRadius = 8;
                 promptBox.style.borderBottomRightRadius = 8;
 
-                actionPromptLabel = new Label("WASD: Move | Space: Jump / Dodge\nLMB: Sword Combo | RMB: Shield Block\nTab: Z-Target | Shift: Dive / Surface\nHold Q / MMB: Weapon Wheel | ◀/▶: Cycle Accessory | ▼/E: Use Item");
+                actionPromptLabel = new Label("WASD: Move | Space: Jump / Dodge\nLMB: Sword Combo | RMB: Shield Block\nTab / MMB (Tap): Lock-On | Shift: Dive\nHold Q (0.25s): Weapon Wheel | ◀/▶: Cycle Accessory | ▼/E: Use Item");
                 actionPromptLabel.style.fontSize = 13;
                 actionPromptLabel.style.color = new Color(0.9f, 0.95f, 1f);
                 actionPromptLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
@@ -205,23 +288,30 @@ namespace ZeldaOoT.UI
         {
             if (zTargetSystem != null && zTargetSystem.IsLockedOn && zTargetSystem.CurrentTarget != null && mainCam != null)
             {
-                Vector3 targetWorldPos = zTargetSystem.CurrentTarget.position + Vector3.up * 0.5f;
+                // Aim position tracks enemy chest/center
+                Vector3 targetWorldPos = zTargetSystem.TargetAimPosition;
                 Vector3 screenPos = mainCam.WorldToScreenPoint(targetWorldPos);
 
+                // Only render when target is in front of camera
                 if (screenPos.z > 0f)
                 {
                     zTargetReticle.style.display = DisplayStyle.Flex;
 
-                    // Convert screen position to UI Toolkit coordinate space
-                    float x = screenPos.x - 30;
-                    float y = Screen.height - screenPos.y - 30;
-                    zTargetReticle.style.left = x;
-                    zTargetReticle.style.top = y;
+                    // Convert from screen coordinates (bottom-left origin) to panel space
+                    Vector2 screen2D = new Vector2(screenPos.x, Screen.height - screenPos.y);
+                    Vector2 panelPos = (root.panel != null) ? RuntimePanelUtils.ScreenToPanel(root.panel, screen2D) : screen2D;
 
-                    // Pulsing animation
-                    float pulse = 1f + Mathf.Sin(Time.time * 8f) * 0.15f;
-                    zTargetReticle.transform.scale = new Vector3(pulse, pulse, 1f);
-                    zTargetReticle.transform.rotation = Quaternion.Euler(0f, 0f, Time.time * 60f);
+                    float halfSize = 32f;
+                    zTargetReticle.style.left = panelPos.x - halfSize;
+                    zTargetReticle.style.top = panelPos.y - halfSize;
+
+                    // Smooth continuous rotation & breathing pulse
+                    float pulse = 1f + Mathf.Sin(Time.time * 6f) * 0.08f;
+                    if (rotatingReticleRing != null)
+                    {
+                        rotatingReticleRing.transform.rotation = Quaternion.Euler(0f, 0f, Time.time * 50f);
+                        rotatingReticleRing.transform.scale = new Vector3(pulse, pulse, 1f);
+                    }
                     return;
                 }
             }

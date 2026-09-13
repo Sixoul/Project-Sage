@@ -39,6 +39,9 @@ namespace ZeldaOoT.Input
         public bool QuickItemHeld { get; private set; }
         public float QuickCycleInput { get; private set; }
 
+        private float wheelHoldTimer = 0f;
+        private const float WheelHoldThreshold = 0.25f;
+
         private void Awake()
         {
             if (Instance == null)
@@ -53,6 +56,22 @@ namespace ZeldaOoT.Input
 
         private void Update()
         {
+            // Weapon Wheel hold threshold detection (Hold Q or Gamepad Left Bumper for >= 0.25s)
+            bool wheelButtonPressed = (Keyboard.current != null && Keyboard.current.qKey.isPressed)
+                                   || (Gamepad.current != null && Gamepad.current.leftShoulder.isPressed);
+
+            if (wheelButtonPressed)
+            {
+                wheelHoldTimer += Time.unscaledDeltaTime;
+                WeaponWheelHeld = wheelHoldTimer >= WheelHoldThreshold;
+            }
+            else
+            {
+                wheelHoldTimer = 0f;
+                WeaponWheelHeld = false;
+                WheelPointerInput = Vector2.zero;
+            }
+
             ReadKeyboardAndMouse();
             ReadGamepad();
         }
@@ -86,13 +105,10 @@ namespace ZeldaOoT.Input
             AttackHeld = mouse != null && mouse.leftButton.isPressed;
             AttackReleased = mouse != null && mouse.leftButton.wasReleasedThisFrame;
             BlockHeld = mouse != null && mouse.rightButton.isPressed;
-            LockOnPressed = mouse != null && mouse.middleButton.wasPressedThisFrame;
+            LockOnPressed = keyboard.tabKey.wasPressedThisFrame || (mouse != null && mouse.middleButton.wasPressedThisFrame);
             DiveHeld = keyboard.leftShiftKey.isPressed || keyboard.cKey.isPressed;
             ItemActionPressed = keyboard.eKey.wasPressedThisFrame || keyboard.fKey.wasPressedThisFrame;
-            InventoryPressed = keyboard.iKey.wasPressedThisFrame || keyboard.tabKey.wasPressedThisFrame;
-
-            // Horizon Weapon Wheel (Hold Q / Tab / Middle Mouse or Left Bumper)
-            WeaponWheelHeld = keyboard.qKey.isPressed || (mouse != null && mouse.middleButton.isPressed);
+            InventoryPressed = keyboard.iKey.wasPressedThisFrame;
 
             // Wheel pointer input (Mouse position offset or stick direction)
             if (mouse != null && WeaponWheelHeld)
@@ -162,10 +178,9 @@ namespace ZeldaOoT.Input
             if (pad.buttonNorth.wasPressedThisFrame) ItemActionPressed = true;
             if (pad.startButton.wasPressedThisFrame || pad.selectButton.wasPressedThisFrame) InventoryPressed = true;
 
-            // Horizon Weapon Wheel (Hold Left Bumper / L1)
-            if (pad.leftShoulder.isPressed)
+            // Horizon Weapon Wheel (Active when held for >= 0.25s)
+            if (WeaponWheelHeld)
             {
-                WeaponWheelHeld = true;
                 // Right stick points to weapon segment
                 if (stickLook.sqrMagnitude > 0.25f)
                 {

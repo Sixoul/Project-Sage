@@ -22,7 +22,14 @@ namespace ZeldaOoT.Combat
 
         public event Action<float, float> OnHealthChanged; // current, max
         public event Action<DamageInfo> OnDamaged;
+        public event Action<DamageInfo> OnDamageBlocked;
         public event Action OnDeath;
+
+        /// <summary>
+        /// Optional delegate to intercept incoming damage before HP deduction.
+        /// Returning true blocks/negates the attack completely.
+        /// </summary>
+        public Func<DamageInfo, bool> DamageFilter { get; set; }
 
         private float invincibilityTimer = 0f;
         public bool IsInvincible => invincibilityTimer > 0f;
@@ -48,6 +55,13 @@ namespace ZeldaOoT.Combat
         public void TakeDamage(DamageInfo damageInfo)
         {
             if (!IsAlive || IsInvincible) return;
+
+            // Check if damage is intercepted/blocked (e.g. Shield Block)
+            if (DamageFilter != null && DamageFilter(damageInfo))
+            {
+                OnDamageBlocked?.Invoke(damageInfo);
+                return;
+            }
 
             CurrentHP = Mathf.Max(0f, CurrentHP - damageInfo.Amount);
             invincibilityTimer = invincibilityDuration;
