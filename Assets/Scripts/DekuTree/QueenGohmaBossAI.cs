@@ -314,7 +314,7 @@ namespace ZeldaOoT.DekuTree
             // If already stunned on ground, take sword slash damage!
             if (currentState == GohmaState.StunnedOnGround)
             {
-                currentHealth -= info.Damage;
+                currentHealth -= info.Amount;
                 if (ZeldaVFXManager.Instance != null)
                 {
                     ZeldaVFXManager.Instance.PlayHitSpark(info.HitPoint, Vector3.up);

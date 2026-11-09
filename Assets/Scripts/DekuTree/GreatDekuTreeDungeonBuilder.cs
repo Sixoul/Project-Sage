@@ -13,6 +13,13 @@ namespace ZeldaOoT.DekuTree
     /// </summary>
     public static class GreatDekuTreeDungeonBuilder
     {
+        private static void SafeDestroy(Object obj)
+        {
+            if (obj == null) return;
+            if (Application.isPlaying) Object.Destroy(obj);
+            else Object.DestroyImmediate(obj);
+        }
+
         public static GameObject BuildDungeon(Vector3 origin)
         {
             GameObject dungeonRoot = new GameObject("Dungeon_Inside_Great_Deku_Tree");
@@ -292,7 +299,7 @@ namespace ZeldaOoT.DekuTree
             waterSurface.transform.localPosition = new Vector3(0f, 0.5f, 0f);
             waterSurface.transform.localScale = new Vector3(radius * 1.8f, 0.1f, radius * 1.8f);
             waterSurface.GetComponent<MeshRenderer>().material = waterMat;
-            Destroy(waterSurface.GetComponent<Collider>());
+            SafeDestroy(waterSurface.GetComponent<Collider>());
 
             // Sandy bottom
             GameObject sandFloor = GameObject.CreatePrimitive(PrimitiveType.Cube);

@@ -86,7 +86,7 @@ namespace ZeldaOoT.DekuTree
         {
             if (currentHealth <= 0f) return;
 
-            currentHealth -= info.Damage;
+            currentHealth -= info.Amount;
             if (ZeldaVFXManager.Instance != null)
             {
                 ZeldaVFXManager.Instance.PlayHitSpark(info.HitPoint, transform.forward);

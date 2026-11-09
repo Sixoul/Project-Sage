@@ -85,7 +85,7 @@ namespace ZeldaOoT.Combat
 
         public void IncreaseMaxHealth(float amount)
         {
-            MaxHP += amount;
+            maxHearts += Mathf.Max(1, Mathf.RoundToInt(amount / 4f));
             CurrentHP = Mathf.Min(CurrentHP + amount, MaxHP);
             OnHealthChanged?.Invoke(CurrentHP, MaxHP);
         }
