@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using ZeldaOoT.Inventory;
 using ZeldaOoT.VFX;
 
@@ -101,7 +102,8 @@ namespace ZeldaOoT.Kokiri
 
         private void Update()
         {
-            if (playerNearby && !isPathUnlocked && UnityEngine.Input.GetKeyDown(KeyCode.E))
+            bool ePressed = Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
+            if (playerNearby && !isPathUnlocked && ePressed)
             {
                 TalkToMido();
             }

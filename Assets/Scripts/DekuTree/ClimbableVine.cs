@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using ZeldaOoT.Player;
 
 namespace ZeldaOoT.DekuTree
@@ -39,7 +40,13 @@ namespace ZeldaOoT.DekuTree
             if (cc != null)
             {
                 // If player is holding W (Up) or S (Down)
-                float v = UnityEngine.Input.GetAxisRaw("Vertical");
+                float v = 0f;
+                if (Keyboard.current != null)
+                {
+                    if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed) v += 1f;
+                    if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) v -= 1f;
+                }
+
                 if (Mathf.Abs(v) > 0.1f)
                 {
                     Vector3 climbMotion = Vector3.up * (v * climbSpeed * Time.deltaTime);

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEngine.InputSystem;
 using ZeldaOoT.Player;
 
 namespace ZeldaOoT.Kokiri
@@ -130,7 +131,10 @@ namespace ZeldaOoT.Kokiri
             if (!IsOpen) return;
 
             // Press 'E' or Attack (Left Click / Space) to advance text
-            if (UnityEngine.Input.GetKeyDown(KeyCode.E) || UnityEngine.Input.GetKeyDown(KeyCode.Space) || UnityEngine.Input.GetMouseButtonDown(0))
+            bool advancePressed = (Keyboard.current != null && (Keyboard.current.eKey.wasPressedThisFrame || Keyboard.current.spaceKey.wasPressedThisFrame))
+                               || (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame);
+
+            if (advancePressed)
             {
                 if (isTyping)
                 {

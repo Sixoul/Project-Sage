@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using ZeldaOoT.Inventory;
 using ZeldaOoT.Combat;
 using ZeldaOoT.VFX;
@@ -87,7 +88,8 @@ namespace ZeldaOoT.Kokiri
 
         private void Update()
         {
-            if (playerNearby && UnityEngine.Input.GetKeyDown(KeyCode.E))
+            bool ePressed = Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
+            if (playerNearby && ePressed)
             {
                 OpenShopMenu();
             }

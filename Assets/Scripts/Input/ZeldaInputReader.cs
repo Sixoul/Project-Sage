@@ -24,6 +24,8 @@ namespace ZeldaOoT.Input
         public bool DiveHeld { get; private set; }
         public bool ItemActionPressed { get; private set; }
         public bool InventoryPressed { get; private set; }
+        public bool InteractPressed { get; private set; }
+        public bool NaviHintPressed { get; private set; }
 
         [Header("Weapon Wheel & D-Pad Accessory Menus")]
         public bool WeaponWheelHeld { get; private set; }
@@ -106,8 +108,10 @@ namespace ZeldaOoT.Input
             AttackReleased = mouse != null && mouse.leftButton.wasReleasedThisFrame;
             BlockHeld = mouse != null && mouse.rightButton.isPressed;
             LockOnPressed = keyboard.tabKey.wasPressedThisFrame || (mouse != null && mouse.middleButton.wasPressedThisFrame);
-            DiveHeld = keyboard.leftShiftKey.isPressed || keyboard.cKey.isPressed;
-            ItemActionPressed = keyboard.eKey.wasPressedThisFrame || keyboard.fKey.wasPressedThisFrame;
+            DiveHeld = keyboard.leftShiftKey.isPressed;
+            ItemActionPressed = keyboard.fKey.wasPressedThisFrame || keyboard.downArrowKey.wasPressedThisFrame;
+            InteractPressed = keyboard.eKey.wasPressedThisFrame;
+            NaviHintPressed = keyboard.cKey.wasPressedThisFrame;
             InventoryPressed = keyboard.iKey.wasPressedThisFrame;
 
             // Wheel pointer input (Mouse position offset or stick direction)

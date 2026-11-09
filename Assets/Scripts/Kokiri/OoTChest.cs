@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using ZeldaOoT.Inventory;
 using ZeldaOoT.VFX;
 
@@ -95,7 +96,8 @@ namespace ZeldaOoT.Kokiri
 
         private void Update()
         {
-            if (playerNearby && !isOpen && UnityEngine.Input.GetKeyDown(KeyCode.E))
+            bool ePressed = Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame;
+            if (playerNearby && !isOpen && ePressed)
             {
                 OpenChest();
             }

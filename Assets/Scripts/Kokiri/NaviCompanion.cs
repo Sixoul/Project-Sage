@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using ZeldaOoT.Player;
 using ZeldaOoT.Inventory;
 
@@ -97,7 +98,8 @@ namespace ZeldaOoT.Kokiri
             if (rightWing != null) rightWing.localRotation = Quaternion.Euler(0f, wingFlap, -25f);
 
             // Press 'C' for Navi Hint
-            if (UnityEngine.Input.GetKeyDown(KeyCode.C) && ZeldaDialogueBox.Instance != null && !ZeldaDialogueBox.Instance.IsOpen)
+            bool cPressed = Keyboard.current != null && Keyboard.current.cKey.wasPressedThisFrame;
+            if (cPressed && ZeldaDialogueBox.Instance != null && !ZeldaDialogueBox.Instance.IsOpen)
             {
                 ProvideHint();
             }
