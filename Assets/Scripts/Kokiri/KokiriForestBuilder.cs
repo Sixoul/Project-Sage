@@ -157,8 +157,16 @@ namespace ZeldaOoT.Kokiri
             // =========================================================================
             // 13. SPAWN LINK & NAVI
             // =========================================================================
-            Vector3 playerSpawn = treehousePos + new Vector3(0f, 4.8f, 0f); // Spawns on treehouse porch!
+            // Spawns on the sunny village path in front of his treehouse, facing North towards the village green!
+            Vector3 playerSpawn = treehousePos + new Vector3(0f, 0.5f, 12f);
             GameObject player = ZeldaPlayerBuilder.CreatePlayer(playerSpawn);
+            player.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+
+            // Ensure ZeldaInputReader exists immediately
+            if (player.GetComponent<ZeldaInputReader>() == null)
+            {
+                player.AddComponent<ZeldaInputReader>();
+            }
 
             // Set authentic OoT starting inventory (starts without sword and shield!)
             var inv = player.GetComponent<PlayerInventory>();
@@ -231,34 +239,82 @@ namespace ZeldaOoT.Kokiri
             GameObject porch = GameObject.CreatePrimitive(PrimitiveType.Cube);
             porch.name = "Treehouse_Porch";
             porch.transform.SetParent(houseRoot.transform, false);
-            porch.transform.localPosition = new Vector3(0f, 4.4f, 0f);
+            porch.transform.localPosition = new Vector3(0f, 4.4f, 0.5f);
             porch.transform.localScale = new Vector3(8.5f, 0.4f, 8.5f);
             porch.GetComponent<MeshRenderer>().material = woodMat;
 
-            // Wooden Access Ramp leading up from ground to porch
-            GameObject ramp = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            ramp.name = "Treehouse_Ramp";
-            ramp.transform.SetParent(houseRoot.transform, false);
-            ramp.transform.localPosition = new Vector3(0f, 2.2f, 7.5f);
-            ramp.transform.localRotation = Quaternion.Euler(22f, 0f, 0f);
-            ramp.transform.localScale = new Vector3(2.8f, 0.35f, 10.5f);
-            ramp.GetComponent<MeshRenderer>().material = woodMat;
+            // Authentic vertical wooden ladder down to the village path
+            GameObject ladder = new GameObject("Treehouse_Ladder");
+            ladder.transform.SetParent(houseRoot.transform, false);
+            ladder.transform.localPosition = new Vector3(0f, 0f, 4.75f);
 
-            // House Cabin Walls
-            for (int w = -1; w <= 1; w += 2)
+            for (int r = 0; r <= 8; r++)
             {
-                GameObject wallZ = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                wallZ.transform.SetParent(houseRoot.transform, false);
-                wallZ.transform.localPosition = new Vector3(0f, 6.2f, w * 3.2f);
-                wallZ.transform.localScale = new Vector3(6.8f, 3.5f, 0.6f);
-                wallZ.GetComponent<MeshRenderer>().material = woodMat;
-
-                GameObject wallX = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                wallX.transform.SetParent(houseRoot.transform, false);
-                wallX.transform.localPosition = new Vector3(w * 3.4f, 6.2f, 0f);
-                wallX.transform.localScale = new Vector3(0.6f, 3.5f, 6.4f);
-                wallX.GetComponent<MeshRenderer>().material = woodMat;
+                float ry = r * 0.5f + 0.3f;
+                GameObject rung = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                rung.name = $"Rung_{r}";
+                rung.transform.SetParent(ladder.transform, false);
+                rung.transform.localPosition = new Vector3(0f, ry, 0f);
+                rung.transform.localScale = new Vector3(1.2f, 0.08f, 0.12f);
+                rung.GetComponent<MeshRenderer>().material = woodMat;
             }
+
+            for (int side = -1; side <= 1; side += 2)
+            {
+                GameObject rail = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                rail.name = side < 0 ? "Rail_L" : "Rail_R";
+                rail.transform.SetParent(ladder.transform, false);
+                rail.transform.localPosition = new Vector3(side * 0.65f, 2.2f, 0f);
+                rail.transform.localScale = new Vector3(0.08f, 4.4f, 0.12f);
+                rail.GetComponent<MeshRenderer>().material = woodMat;
+            }
+
+            // Cabin Walls with Open Front Doorway
+            // South wall (back)
+            GameObject wallSouth = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wallSouth.name = "Treehouse_Wall_South";
+            wallSouth.transform.SetParent(houseRoot.transform, false);
+            wallSouth.transform.localPosition = new Vector3(0f, 6.2f, -3.2f);
+            wallSouth.transform.localScale = new Vector3(6.8f, 3.5f, 0.6f);
+            wallSouth.GetComponent<MeshRenderer>().material = woodMat;
+
+            // West wall (left)
+            GameObject wallWest = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wallWest.name = "Treehouse_Wall_West";
+            wallWest.transform.SetParent(houseRoot.transform, false);
+            wallWest.transform.localPosition = new Vector3(-3.4f, 6.2f, 0f);
+            wallWest.transform.localScale = new Vector3(0.6f, 3.5f, 6.4f);
+            wallWest.GetComponent<MeshRenderer>().material = woodMat;
+
+            // East wall (right)
+            GameObject wallEast = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wallEast.name = "Treehouse_Wall_East";
+            wallEast.transform.SetParent(houseRoot.transform, false);
+            wallEast.transform.localPosition = new Vector3(3.4f, 6.2f, 0f);
+            wallEast.transform.localScale = new Vector3(0.6f, 3.5f, 6.4f);
+            wallEast.GetComponent<MeshRenderer>().material = woodMat;
+
+            // North front wall with open doorway leading directly onto the porch
+            GameObject wallNorthL = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wallNorthL.name = "Treehouse_Wall_North_L";
+            wallNorthL.transform.SetParent(houseRoot.transform, false);
+            wallNorthL.transform.localPosition = new Vector3(-2.2f, 6.2f, 3.2f);
+            wallNorthL.transform.localScale = new Vector3(2.4f, 3.5f, 0.6f);
+            wallNorthL.GetComponent<MeshRenderer>().material = woodMat;
+
+            GameObject wallNorthR = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wallNorthR.name = "Treehouse_Wall_North_R";
+            wallNorthR.transform.SetParent(houseRoot.transform, false);
+            wallNorthR.transform.localPosition = new Vector3(2.2f, 6.2f, 3.2f);
+            wallNorthR.transform.localScale = new Vector3(2.4f, 3.5f, 0.6f);
+            wallNorthR.GetComponent<MeshRenderer>().material = woodMat;
+
+            GameObject doorLintel = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            doorLintel.name = "Treehouse_Door_Lintel";
+            doorLintel.transform.SetParent(houseRoot.transform, false);
+            doorLintel.transform.localPosition = new Vector3(0f, 7.4f, 3.2f);
+            doorLintel.transform.localScale = new Vector3(2.2f, 1.1f, 0.6f);
+            doorLintel.GetComponent<MeshRenderer>().material = woodMat;
 
             // Link's Bed inside
             GameObject bed = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -540,6 +596,8 @@ namespace ZeldaOoT.Kokiri
                 rig = mainCam.gameObject.AddComponent<ZeldaCameraRig>();
             }
             rig.SetTarget(player);
+            mainCam.transform.position = player.position + new Vector3(0f, 1.8f, -4.5f);
+            mainCam.transform.rotation = Quaternion.Euler(15f, 0f, 0f);
         }
 
         private static void SetupUI()

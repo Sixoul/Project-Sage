@@ -9,7 +9,25 @@ namespace ZeldaOoT.Input
     /// </summary>
     public class ZeldaInputReader : MonoBehaviour
     {
-        public static ZeldaInputReader Instance { get; private set; }
+        private static ZeldaInputReader instance;
+        public static ZeldaInputReader Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    instance = FindFirstObjectByType<ZeldaInputReader>();
+                    if (instance == null)
+                    {
+                        var go = new GameObject("Zelda_Input_Manager");
+                        instance = go.AddComponent<ZeldaInputReader>();
+                        if (Application.isPlaying) DontDestroyOnLoad(go);
+                    }
+                }
+                return instance;
+            }
+            private set => instance = value;
+        }
 
         [Header("Live Input Values")]
         public Vector2 MoveInput { get; private set; }
@@ -46,11 +64,11 @@ namespace ZeldaOoT.Input
 
         private void Awake()
         {
-            if (Instance == null)
+            if (instance == null)
             {
-                Instance = this;
+                instance = this;
             }
-            else if (Instance != this)
+            else if (instance != this)
             {
                 Destroy(gameObject);
             }

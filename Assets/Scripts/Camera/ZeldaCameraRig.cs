@@ -60,8 +60,17 @@ namespace ZeldaOoT.CameraRig
             currentDist = defaultDistance;
             currentCollisionDist = Mathf.Max(minDistance, defaultDistance);
             EnsureTarget();
-
-            currentYaw = transform.eulerAngles.y;
+            if (target != null)
+            {
+                currentYaw = target.eulerAngles.y;
+                currentPitch = 15f;
+                smoothedFocusPoint = target.position + targetOffset;
+                ApplyCameraPositionAndRotation();
+            }
+            else
+            {
+                currentYaw = transform.eulerAngles.y;
+            }
             inputReader = ZeldaInputReader.Instance;
         }
 
