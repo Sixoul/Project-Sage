@@ -25,10 +25,13 @@ namespace ZeldaOoT.UI
         private VisualElement zTargetReticle;
         private VisualElement rotatingReticleRing;
         private Label actionPromptLabel;
+        private Label rupeeLabel;
+        private Label ammoLabel;
 
         private HealthSystem playerHealth;
         private WaterSwimController swimController;
         private ZTargetSystem zTargetSystem;
+        private ZeldaOoT.Inventory.PlayerInventory playerInventory;
         private Camera mainCam;
 
         private readonly List<VisualElement> heartElements = new List<VisualElement>();
@@ -47,6 +50,7 @@ namespace ZeldaOoT.UI
                 playerHealth = player.GetComponent<HealthSystem>();
                 swimController = player.GetComponent<WaterSwimController>();
                 zTargetSystem = player.GetComponent<ZTargetSystem>();
+                playerInventory = player.GetComponent<ZeldaOoT.Inventory.PlayerInventory>();
             }
 
             BuildHUDHierarchy();
@@ -60,6 +64,12 @@ namespace ZeldaOoT.UI
             if (swimController != null)
             {
                 swimController.OnOxygenChanged += UpdateOxygen;
+            }
+
+            if (playerInventory != null)
+            {
+                playerInventory.OnRupeesChanged += UpdateRupeeCount;
+                UpdateRupeeCount(playerInventory.Rupees);
             }
         }
 
@@ -81,6 +91,35 @@ namespace ZeldaOoT.UI
                 heartsContainer.style.left = 28;
                 heartsContainer.style.flexDirection = FlexDirection.Row;
                 root.Add(heartsContainer);
+            }
+
+            // Rupee & Item Ammo Bar (Directly below Hearts)
+            VisualElement rupeeBox = root.Q<VisualElement>("RupeeBox");
+            if (rupeeBox == null)
+            {
+                rupeeBox = new VisualElement();
+                rupeeBox.name = "RupeeBox";
+                rupeeBox.style.position = Position.Absolute;
+                rupeeBox.style.top = 64;
+                rupeeBox.style.left = 28;
+                rupeeBox.style.flexDirection = FlexDirection.Row;
+                rupeeBox.style.alignItems = Align.Center;
+
+                rupeeLabel = new Label("💎 0");
+                rupeeLabel.name = "RupeeLabel";
+                rupeeLabel.style.fontSize = 17;
+                rupeeLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+                rupeeLabel.style.color = new Color(0.2f, 0.95f, 0.35f);
+                rupeeLabel.style.marginRight = 14;
+                rupeeBox.Add(rupeeLabel);
+
+                ammoLabel = new Label("🌰 30 | 🥢 10");
+                ammoLabel.name = "AmmoLabel";
+                ammoLabel.style.fontSize = 14;
+                ammoLabel.style.color = new Color(0.95f, 0.85f, 0.45f);
+                rupeeBox.Add(ammoLabel);
+
+                root.Add(rupeeBox);
             }
 
             // 2. Oxygen Gauge (Center-Top, hidden by default)
@@ -385,6 +424,19 @@ namespace ZeldaOoT.UI
             else
             {
                 oxygenContainer.style.display = DisplayStyle.None;
+            }
+        }
+
+        private void UpdateRupeeCount(int count)
+        {
+            if (rupeeLabel != null)
+            {
+                rupeeLabel.text = $"💎 {count}";
+            }
+
+            if (ammoLabel != null && playerInventory != null)
+            {
+                ammoLabel.text = $"🌰 {playerInventory.DekuSeeds} | 🥢 {playerInventory.DekuSticks}";
             }
         }
     }

@@ -20,6 +20,10 @@ namespace ZeldaOoT.Player
         [SerializeField] private Transform shieldArm;
         [SerializeField] private Transform capTail;
 
+        [Header("VFX & Trail Settings")]
+        [SerializeField] private Material spinSlashMaterial;
+        [SerializeField] private Texture2D spinSlashTexture;
+
         private PlayerLocomotion locomotion;
         private PlayerCombat combat;
         private ZeldaDodgeController dodge;
@@ -410,22 +414,113 @@ namespace ZeldaOoT.Player
             float totalSpin = level == 2 ? 720f : 360f;
             float elapsed = 0f;
 
-            // Spawn radiant full-circle slash arc
-            Color spinColor = level == 2 ? new Color(0.2f, 0.9f, 1f, 0.95f) : new Color(0.35f, 1f, 0.45f, 0.9f);
-            CreateSlashArc(transform.position + Vector3.up * 0.95f, Vector3.up, 0f, 360f, level == 2 ? 2.4f : 1.8f, spinColor, 0.35f);
+            float outerRad = level == 2 ? 2.4f : 1.8f;
+            float innerRad = outerRad * 0.48f;
+            float maxArcLength = level == 2 ? 200f : 155f;
+
+            Color spinColor = level == 2 ? new Color(0.2f, 0.85f, 1f, 1f) : new Color(0.25f, 0.95f, 0.45f, 1f);
+            Color emissionColor = level == 2 ? new Color(0.3f, 2.8f, 3.5f, 1f) : new Color(0.4f, 2.5f, 0.8f, 1f);
+
+            // Create dynamic trail object that sweeps in real time with Link's rotating sword
+            GameObject trailObj = new GameObject("SpinSlashSweepingTrail");
+            MeshFilter mf = trailObj.AddComponent<MeshFilter>();
+            MeshRenderer mr = trailObj.AddComponent<MeshRenderer>();
+
+            Material trailMat = spinSlashMaterial != null ? new Material(spinSlashMaterial) : null;
+            if (trailMat == null)
+            {
+                Shader trailShader = Shader.Find("Zelda/SwordSlashTrail")
+                                   ?? Shader.Find("Universal Render Pipeline/Particles/Unlit")
+                                   ?? Shader.Find("Universal Render Pipeline/Lit");
+                trailMat = new Material(trailShader);
+                if (spinSlashTexture != null) trailMat.mainTexture = spinSlashTexture;
+            }
+
+            trailMat.SetColor("_BaseColor", spinColor);
+            trailMat.SetColor("_EmissionColor", emissionColor);
+            mr.material = trailMat;
+
+            Mesh trailMesh = new Mesh();
+            trailMesh.name = "DynamicSpinTrail";
+            mf.mesh = trailMesh;
+
+            const int segments = 32;
+            Vector3[] verts = new Vector3[(segments + 1) * 2];
+            Vector2[] uvs = new Vector2[(segments + 1) * 2];
+            Color[] colors = new Color[(segments + 1) * 2];
+            int[] tris = new int[segments * 6];
+
+            for (int i = 0; i < segments; i++)
+            {
+                int root = i * 2;
+                tris[i * 6] = root;
+                tris[i * 6 + 1] = root + 1;
+                tris[i * 6 + 2] = root + 2;
+
+                tris[i * 6 + 3] = root + 1;
+                tris[i * 6 + 4] = root + 3;
+                tris[i * 6 + 5] = root + 2;
+            }
 
             while (elapsed < duration)
             {
                 elapsed += Time.deltaTime;
-                float t = elapsed / duration;
+                float t = Mathf.Clamp01(elapsed / duration);
                 float currentAngle = Mathf.Lerp(0f, totalSpin, Mathf.SmoothStep(0f, 1f, t));
                 modelRoot.localRotation = Quaternion.Euler(0f, currentAngle, 0f);
 
                 // Sword held horizontal flat at waist height
                 if (swordArm != null) swordArm.localRotation = Quaternion.Euler(18f, 95f, 0f);
 
+                // Arc length ramps up quickly at start, sustains, and tapers down at finish
+                float arcLength;
+                if (t < 0.15f)
+                    arcLength = Mathf.Lerp(15f, maxArcLength, t / 0.15f);
+                else if (t > 0.82f)
+                    arcLength = Mathf.Lerp(maxArcLength, 0f, (t - 0.82f) / 0.18f);
+                else
+                    arcLength = maxArcLength;
+
+                // Position trail at player waist height
+                Vector3 center = transform.position + Vector3.up * 0.95f;
+                trailObj.transform.position = Vector3.zero;
+                trailObj.transform.rotation = Quaternion.identity;
+
+                // Sword leading angle (character yaw + spin angle + arm rotation offset)
+                float leadAngle = transform.eulerAngles.y + currentAngle + 75f;
+                float globalFade = t > 0.8f ? (1f - (t - 0.8f) / 0.2f) : 1f;
+
+                for (int i = 0; i <= segments; i++)
+                {
+                    float frac = (float)i / segments; // 0 at sword blade, 1 at tail
+                    float segAngle = (leadAngle - frac * arcLength) * Mathf.Deg2Rad;
+                    float cos = Mathf.Sin(segAngle);
+                    float sin = Mathf.Cos(segAngle);
+
+                    verts[i * 2] = center + new Vector3(cos * innerRad, 0f, sin * innerRad);
+                    verts[i * 2 + 1] = center + new Vector3(cos * outerRad, 0f, sin * outerRad);
+
+                    // UVs: U = 0 at leading blade tip, 1 at trailing tail
+                    uvs[i * 2] = new Vector2(frac, 0f);
+                    uvs[i * 2 + 1] = new Vector2(frac, 1f);
+
+                    Color segColor = spinColor;
+                    segColor.a = (1f - frac) * globalFade;
+                    colors[i * 2] = segColor;
+                    colors[i * 2 + 1] = segColor;
+                }
+
+                trailMesh.vertices = verts;
+                trailMesh.uv = uvs;
+                trailMesh.colors = colors;
+                trailMesh.triangles = tris;
+                trailMesh.RecalculateNormals();
+                trailMesh.RecalculateBounds();
+
                 yield return null;
             }
+
+            Destroy(trailObj);
 
             if (swordArm != null) swordArm.localRotation = initialSwordRot;
             modelRoot.localRotation = initialModelRot;
@@ -440,22 +535,20 @@ namespace ZeldaOoT.Player
             MeshFilter mf = arcObj.AddComponent<MeshFilter>();
             MeshRenderer mr = arcObj.AddComponent<MeshRenderer>();
 
-            Shader urpLit = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-            Material mat = new Material(urpLit);
-            mat.color = color;
-            mat.SetFloat("_Surface", 1f); // Transparent
-            mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-            mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.One); // Additive glow
-            mat.SetInt("_ZWrite", 0);
-            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-            mat.EnableKeyword("_EMISSION");
-            mat.SetColor("_EmissionColor", color * 2.5f);
-            mat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            Shader trailShader = Shader.Find("Zelda/SwordSlashTrail")
+                               ?? Shader.Find("Universal Render Pipeline/Particles/Unlit")
+                               ?? Shader.Find("Universal Render Pipeline/Lit");
+            Material mat = spinSlashMaterial != null ? new Material(spinSlashMaterial) : new Material(trailShader);
+            mat.SetColor("_BaseColor", color);
+            mat.SetColor("_EmissionColor", color * 2.2f);
+            if (spinSlashTexture != null) mat.mainTexture = spinSlashTexture;
             mr.material = mat;
 
             // Generate ribbon crescent mesh
             int segments = 24;
             Vector3[] vertices = new Vector3[(segments + 1) * 2];
+            Vector2[] uvs = new Vector2[(segments + 1) * 2];
+            Color[] colors = new Color[(segments + 1) * 2];
             int[] triangles = new int[segments * 6];
 
             float innerRad = radius * 0.55f;
@@ -470,6 +563,14 @@ namespace ZeldaOoT.Player
 
                 vertices[i * 2] = new Vector3(cos * innerRad, sin * innerRad, 0f);
                 vertices[i * 2 + 1] = new Vector3(cos * outerRad, sin * outerRad, 0f);
+
+                // UVs: U = 0 at leading edge, 1 at tail; V = 0 inner, 1 outer tip
+                float u = 1f - frac;
+                uvs[i * 2] = new Vector2(u, 0f);
+                uvs[i * 2 + 1] = new Vector2(u, 1f);
+
+                colors[i * 2] = color;
+                colors[i * 2 + 1] = color;
 
                 if (i < segments)
                 {
@@ -486,11 +587,37 @@ namespace ZeldaOoT.Player
 
             Mesh mesh = new Mesh();
             mesh.vertices = vertices;
+            mesh.uv = uvs;
+            mesh.colors = colors;
             mesh.triangles = triangles;
             mesh.RecalculateNormals();
             mf.mesh = mesh;
 
-            Destroy(arcObj, lifetime);
+            StartCoroutine(FadeSlashArc(arcObj, mat, lifetime));
+        }
+
+        private IEnumerator FadeSlashArc(GameObject arcObj, Material mat, float lifetime)
+        {
+            float elapsed = 0f;
+            Color initBase = mat.GetColor("_BaseColor");
+            Color initEmiss = mat.HasProperty("_EmissionColor") ? mat.GetColor("_EmissionColor") : initBase;
+
+            while (elapsed < lifetime)
+            {
+                elapsed += Time.deltaTime;
+                float t = elapsed / lifetime;
+                float alpha = 1f - (t * t);
+                if (mat != null)
+                {
+                    Color c = initBase;
+                    c.a *= alpha;
+                    mat.SetColor("_BaseColor", c);
+                    mat.SetColor("_EmissionColor", initEmiss * alpha);
+                }
+                yield return null;
+            }
+
+            if (arcObj != null) Destroy(arcObj);
         }
 
         private void CreateChargeSpark(int level)

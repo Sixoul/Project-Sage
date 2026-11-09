@@ -44,6 +44,8 @@
 
 # Visual Studio cache directory
 .vs/
+.idea/
+/[Aa]ssets/_Recovery*
 
 # Gradle cache directory
 .gradle/

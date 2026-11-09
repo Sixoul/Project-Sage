@@ -3,19 +3,35 @@ using UnityEditor;
 using UnityEngine;
 using UnityEditor.SceneManagement;
 using ZeldaOoT.Environment;
+using ZeldaOoT.Kokiri;
 
 namespace ZeldaOoT.Editor
 {
     /// <summary>
-    /// Editor Menu utility to generate or reset the Zelda Showcase Playground directly in the active scene.
+    /// Editor Menu utility to generate or reset Kokiri Forest, Inside the Great Deku Tree,
+    /// or the Zelda Showcase Playground directly in the active scene.
     /// </summary>
     public static class ZeldaPlaygroundMenu
     {
+        [MenuItem("Zelda/Build Kokiri Forest & Great Deku Tree", false, 1)]
+        public static void BuildKokiriForestInScene()
+        {
+            ClearAllFromScene();
+
+            GameObject spawnerObj = new GameObject("KokiriForest_Spawner");
+            var builder = spawnerObj.AddComponent<KokiriForestBuilder>();
+            builder.BuildKokiriForest();
+
+            Undo.RegisterCreatedObjectUndo(spawnerObj, "Build Kokiri Forest & Great Deku Tree");
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+
+            Debug.Log("<b>[Zelda OoT]</b> Successfully generated Kokiri Forest and Inside the Great Deku Tree with all puzzles, shop, Mido, enemies, and Queen Gohma!");
+        }
+
         [MenuItem("Zelda/Build Showcase Test Playground", false, 10)]
         public static void BuildPlaygroundInScene()
         {
-            // Clear existing if present
-            ClearPlaygroundFromScene();
+            ClearAllFromScene();
 
             GameObject spawnerObj = new GameObject("Playground_Spawner");
             var builder = spawnerObj.AddComponent<ZeldaPlaygroundBuilder>();
@@ -27,10 +43,13 @@ namespace ZeldaOoT.Editor
             Debug.Log("<b>[Zelda Showcase]</b> Successfully generated Test Playground with Arena, Water Swimming Basin, Platforms, Combat Dummies, and UI Toolkit HUD!");
         }
 
-        [MenuItem("Zelda/Clear Playground", false, 11)]
-        public static void ClearPlaygroundFromScene()
+        [MenuItem("Zelda/Clear World & Reset", false, 12)]
+        public static void ClearAllFromScene()
         {
             string[] namesToClear = {
+                "KokiriForest_Spawner",
+                "Kokiri_Forest_World",
+                "Dungeon_Inside_Great_Deku_Tree",
                 "Playground_Spawner",
                 "Zelda_Test_Playground",
                 "Player_Link",

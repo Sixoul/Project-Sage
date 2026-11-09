@@ -277,11 +277,22 @@ namespace ZeldaOoT.VFX
                 return;
             }
 
-            // Procedural Fiery Explosion Particles
+            // Procedural Fiery Explosion Particles Root
             GameObject boomObj = new GameObject("VFX_BombExplosion");
             boomObj.transform.position = position;
 
-            // Child 1: Fire & Flash Core
+            // 1. Dynamic Point Light Flash
+            GameObject lightObj = new GameObject("ExplosionLightFlash");
+            lightObj.transform.position = position + Vector3.up * 0.6f;
+            lightObj.transform.SetParent(boomObj.transform, true);
+            Light expLight = lightObj.AddComponent<Light>();
+            expLight.type = LightType.Point;
+            expLight.range = 16f;
+            expLight.intensity = 18f;
+            expLight.color = new Color(1f, 0.72f, 0.3f);
+            StartCoroutine(FadeExplosionLight(expLight, 0.28f));
+
+            // 2. Child: Fire & Flash Core
             ParticleSystem psFlash = boomObj.AddComponent<ParticleSystem>();
             psFlash.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             var rendFlash = boomObj.GetComponent<ParticleSystemRenderer>();
@@ -291,60 +302,213 @@ namespace ZeldaOoT.VFX
             mainF.playOnAwake = false;
             mainF.loop = false;
             mainF.duration = 0.4f;
-            mainF.startLifetime = new ParticleSystem.MinMaxCurve(0.2f, 0.4f);
-            mainF.startSpeed = new ParticleSystem.MinMaxCurve(5f, 14f);
-            mainF.startSize = new ParticleSystem.MinMaxCurve(0.6f, 1.6f);
-            mainF.startColor = new ParticleSystem.MinMaxGradient(new Color(1f, 0.9f, 0.3f), new Color(1f, 0.35f, 0.05f));
+            mainF.startLifetime = new ParticleSystem.MinMaxCurve(0.2f, 0.38f);
+            mainF.startSpeed = new ParticleSystem.MinMaxCurve(6f, 15f);
+            mainF.startSize = new ParticleSystem.MinMaxCurve(0.8f, 2.0f);
+            mainF.startColor = new ParticleSystem.MinMaxGradient(new Color(1f, 0.95f, 0.5f), new Color(1f, 0.32f, 0.04f));
             mainF.simulationSpace = ParticleSystemSimulationSpace.World;
             mainF.gravityModifier = -0.5f;
 
             var emF = psFlash.emission;
             emF.rateOverTime = 0;
-            emF.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0f, 30, 45) });
+            emF.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0f, 36, 50) });
 
             var shapeF = psFlash.shape;
             shapeF.shapeType = ParticleSystemShapeType.Sphere;
-            shapeF.radius = 0.5f;
+            shapeF.radius = 0.6f;
 
             var colF = psFlash.colorOverLifetime;
             colF.enabled = true;
             Gradient gradF = new Gradient();
             gradF.SetKeys(
-                new GradientColorKey[] { new GradientColorKey(new Color(1f, 1f, 0.8f), 0f), new GradientColorKey(new Color(0.9f, 0.2f, 0f), 0.6f) },
+                new GradientColorKey[] { new GradientColorKey(new Color(1f, 1f, 0.85f), 0f), new GradientColorKey(new Color(0.95f, 0.25f, 0.02f), 0.65f) },
                 new GradientAlphaKey[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0f, 1f) }
             );
             colF.color = gradF;
 
-            // Child 2: Smoke & Shockwave Embers
-            GameObject debrisObj = new GameObject("ExplosionDebris");
-            debrisObj.transform.SetParent(boomObj.transform, false);
-            ParticleSystem psDebris = debrisObj.AddComponent<ParticleSystem>();
-            psDebris.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            var rendDebris = debrisObj.GetComponent<ParticleSystemRenderer>();
-            if (particleAlphaMat != null) rendDebris.material = particleAlphaMat;
+            // 3. Child: Expanding Ground Shockwave Ring
+            GameObject shockObj = new GameObject("ExplosionShockwave");
+            shockObj.transform.SetParent(boomObj.transform, false);
+            shockObj.transform.localPosition = Vector3.up * 0.1f;
+            ParticleSystem psShock = shockObj.AddComponent<ParticleSystem>();
+            psShock.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            var rendShock = shockObj.GetComponent<ParticleSystemRenderer>();
+            if (particleAdditiveMat != null) rendShock.material = particleAdditiveMat;
 
-            var mainD = psDebris.main;
-            mainD.playOnAwake = false;
-            mainD.loop = false;
-            mainD.duration = 0.6f;
-            mainD.startLifetime = new ParticleSystem.MinMaxCurve(0.4f, 0.8f);
-            mainD.startSpeed = new ParticleSystem.MinMaxCurve(7f, 16f);
-            mainD.startSize = new ParticleSystem.MinMaxCurve(0.12f, 0.3f);
-            mainD.startColor = new Color(0.2f, 0.18f, 0.16f, 0.8f);
-            mainD.simulationSpace = ParticleSystemSimulationSpace.World;
-            mainD.gravityModifier = 1.8f;
+            var mainS = psShock.main;
+            mainS.playOnAwake = false;
+            mainS.loop = false;
+            mainS.duration = 0.35f;
+            mainS.startLifetime = new ParticleSystem.MinMaxCurve(0.22f, 0.32f);
+            mainS.startSpeed = new ParticleSystem.MinMaxCurve(10f, 18f);
+            mainS.startSize = new ParticleSystem.MinMaxCurve(0.4f, 0.9f);
+            mainS.startColor = new Color(1f, 0.75f, 0.35f, 0.9f);
+            mainS.simulationSpace = ParticleSystemSimulationSpace.World;
+            mainS.gravityModifier = 0f;
 
-            var emD = psDebris.emission;
-            emD.rateOverTime = 0;
-            emD.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0f, 24, 36) });
+            var emS = psShock.emission;
+            emS.rateOverTime = 0;
+            emS.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0f, 36, 48) });
 
-            var shapeD = psDebris.shape;
-            shapeD.shapeType = ParticleSystemShapeType.Hemisphere;
-            shapeD.radius = 0.3f;
+            var shapeS = psShock.shape;
+            shapeS.shapeType = ParticleSystemShapeType.Circle;
+            shapeS.radius = 0.3f;
+            shapeS.rotation = new Vector3(90f, 0f, 0f); // flat horizontal ring along the ground
+
+            var colS = psShock.colorOverLifetime;
+            colS.enabled = true;
+            Gradient gradS = new Gradient();
+            gradS.SetKeys(
+                new GradientColorKey[] { new GradientColorKey(new Color(1f, 0.9f, 0.6f), 0f), new GradientColorKey(new Color(0.9f, 0.3f, 0.05f), 0.7f) },
+                new GradientAlphaKey[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0f, 1f) }
+            );
+            colS.color = gradS;
+
+            // 4. Child: Billowing Dark Smoke Clouds
+            GameObject smokeObj = new GameObject("ExplosionSmoke");
+            smokeObj.transform.SetParent(boomObj.transform, false);
+            ParticleSystem psSmoke = smokeObj.AddComponent<ParticleSystem>();
+            psSmoke.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            var rendSmoke = smokeObj.GetComponent<ParticleSystemRenderer>();
+            if (particleAlphaMat != null) rendSmoke.material = particleAlphaMat;
+
+            var mainSmk = psSmoke.main;
+            mainSmk.playOnAwake = false;
+            mainSmk.loop = false;
+            mainSmk.duration = 0.9f;
+            mainSmk.startLifetime = new ParticleSystem.MinMaxCurve(0.6f, 1.1f);
+            mainSmk.startSpeed = new ParticleSystem.MinMaxCurve(3f, 7f);
+            mainSmk.startSize = new ParticleSystem.MinMaxCurve(0.7f, 1.6f);
+            mainSmk.startColor = new Color(0.18f, 0.16f, 0.15f, 0.75f);
+            mainSmk.simulationSpace = ParticleSystemSimulationSpace.World;
+            mainSmk.gravityModifier = -0.4f; // Buoyant upward drift
+
+            var emSmk = psSmoke.emission;
+            emSmk.rateOverTime = 0;
+            emSmk.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0.04f, 22, 32) });
+
+            var shapeSmk = psSmoke.shape;
+            shapeSmk.shapeType = ParticleSystemShapeType.Sphere;
+            shapeSmk.radius = 0.8f;
+
+            var sizeSmk = psSmoke.sizeOverLifetime;
+            sizeSmk.enabled = true;
+            AnimationCurve smokeCurve = new AnimationCurve();
+            smokeCurve.AddKey(0f, 0.5f);
+            smokeCurve.AddKey(0.4f, 1.3f);
+            smokeCurve.AddKey(1f, 2.0f);
+            sizeSmk.size = new ParticleSystem.MinMaxCurve(1f, smokeCurve);
+
+            var colSmk = psSmoke.colorOverLifetime;
+            colSmk.enabled = true;
+            Gradient gradSmk = new Gradient();
+            gradSmk.SetKeys(
+                new GradientColorKey[] { new GradientColorKey(new Color(0.25f, 0.2f, 0.18f), 0f), new GradientColorKey(new Color(0.12f, 0.11f, 0.11f), 1f) },
+                new GradientAlphaKey[] { new GradientAlphaKey(0.8f, 0f), new GradientAlphaKey(0f, 1f) }
+            );
+            colSmk.color = gradSmk;
+
+            // 5. Child: High-Velocity Fiery Shrapnel Sparks
+            GameObject sparkObj = new GameObject("ExplosionSparks");
+            sparkObj.transform.SetParent(boomObj.transform, false);
+            ParticleSystem psSparks = sparkObj.AddComponent<ParticleSystem>();
+            psSparks.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            var rendSparks = sparkObj.GetComponent<ParticleSystemRenderer>();
+            if (particleAdditiveMat != null) rendSparks.material = particleAdditiveMat;
+
+            var mainSpk = psSparks.main;
+            mainSpk.playOnAwake = false;
+            mainSpk.loop = false;
+            mainSpk.duration = 0.6f;
+            mainSpk.startLifetime = new ParticleSystem.MinMaxCurve(0.35f, 0.7f);
+            mainSpk.startSpeed = new ParticleSystem.MinMaxCurve(12f, 22f);
+            mainSpk.startSize = new ParticleSystem.MinMaxCurve(0.08f, 0.22f);
+            mainSpk.startColor = new Color(1f, 0.8f, 0.2f);
+            mainSpk.simulationSpace = ParticleSystemSimulationSpace.World;
+            mainSpk.gravityModifier = 2.4f;
+
+            var emSpk = psSparks.emission;
+            emSpk.rateOverTime = 0;
+            emSpk.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0f, 30, 45) });
+
+            var shapeSpk = psSparks.shape;
+            shapeSpk.shapeType = ParticleSystemShapeType.Hemisphere;
+            shapeSpk.radius = 0.25f;
 
             psFlash.Play();
-            psDebris.Play();
-            Destroy(boomObj, 1.2f);
+            psShock.Play();
+            psSmoke.Play();
+            psSparks.Play();
+
+            // 6. Ground Scorch Mark Decal
+            SpawnGroundScorchMark(position);
+
+            Destroy(boomObj, 1.6f);
+        }
+
+        private void SpawnGroundScorchMark(Vector3 position)
+        {
+            if (Physics.Raycast(position + Vector3.up * 0.5f, Vector3.down, out RaycastHit hit, 4f))
+            {
+                GameObject scorchObj = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                scorchObj.name = "BombScorchMark";
+                scorchObj.transform.position = hit.point + hit.normal * 0.02f;
+                scorchObj.transform.rotation = Quaternion.LookRotation(-hit.normal);
+                scorchObj.transform.localScale = Vector3.one * 2.8f;
+
+                var col = scorchObj.GetComponent<Collider>();
+                if (col != null) Destroy(col);
+
+                var mr = scorchObj.GetComponent<MeshRenderer>();
+                Material sMat = particleAlphaMat != null ? new Material(particleAlphaMat) : new Material(Shader.Find("Sprites/Default"));
+                sMat.color = new Color(0.06f, 0.05f, 0.04f, 0.78f);
+                mr.material = sMat;
+
+                StartCoroutine(FadeScorchMark(scorchObj, sMat, 4.5f));
+            }
+        }
+
+        private IEnumerator FadeExplosionLight(Light light, float duration)
+        {
+            float elapsed = 0f;
+            float initialIntensity = light != null ? light.intensity : 18f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = elapsed / duration;
+                if (light != null)
+                {
+                    light.intensity = Mathf.Lerp(initialIntensity, 0f, t * t);
+                }
+                yield return null;
+            }
+            if (light != null)
+            {
+                Destroy(light.gameObject);
+            }
+        }
+
+        private IEnumerator FadeScorchMark(GameObject scorchObj, Material scorchMat, float lifetime)
+        {
+            float elapsed = 0f;
+            Color initialColor = scorchMat != null ? scorchMat.color : Color.black;
+            while (elapsed < lifetime)
+            {
+                elapsed += Time.deltaTime;
+                float t = elapsed / lifetime;
+                if (t > 0.55f && scorchMat != null)
+                {
+                    float fadeT = (t - 0.55f) / 0.45f;
+                    Color c = initialColor;
+                    c.a = Mathf.Lerp(initialColor.a, 0f, fadeT);
+                    scorchMat.color = c;
+                }
+                yield return null;
+            }
+            if (scorchObj != null)
+            {
+                Destroy(scorchObj);
+            }
         }
 
         // =========================================================================

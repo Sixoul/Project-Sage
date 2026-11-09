@@ -12,6 +12,8 @@ namespace ZeldaOoT.CameraRig
     /// </summary>
     public class ZeldaCameraRig : MonoBehaviour
     {
+        public static ZeldaCameraRig Instance { get; private set; }
+
         [Header("Follow Settings")]
         [SerializeField] private Transform target;
         [SerializeField] private Vector3 targetOffset = new Vector3(0f, 1.4f, 0f);
@@ -41,8 +43,17 @@ namespace ZeldaOoT.CameraRig
         private float currentCollisionDist;
         private Vector3 smoothedFocusPoint;
 
+        private float shakeTimer = 0f;
+        private float shakeDuration = 0f;
+        private float shakeIntensity = 0f;
+
         private ZeldaInputReader inputReader;
         private ZTargetSystem zTargetSystem;
+
+        private void Awake()
+        {
+            Instance = this;
+        }
 
         private void Start()
         {
@@ -190,6 +201,16 @@ namespace ZeldaOoT.CameraRig
             currentCollisionDist = Mathf.Clamp(currentCollisionDist, minDistance, maxDistance);
 
             Vector3 finalPos = smoothedFocusPoint + backDir * currentCollisionDist;
+
+            // Apply camera shake if active
+            if (shakeTimer > 0f)
+            {
+                shakeTimer -= Time.deltaTime;
+                float progress = shakeTimer / Mathf.Max(0.001f, shakeDuration);
+                Vector3 shakeOffset = Random.insideUnitSphere * (shakeIntensity * progress);
+                finalPos += shakeOffset;
+            }
+
             transform.position = finalPos;
 
             // Guard against NaN look-rotation
@@ -202,6 +223,16 @@ namespace ZeldaOoT.CameraRig
             {
                 transform.rotation = rotation;
             }
+        }
+
+        /// <summary>
+        /// Triggers camera screen shake for explosions, heavy hits, and impacts.
+        /// </summary>
+        public void TriggerShake(float intensity, float duration)
+        {
+            shakeIntensity = Mathf.Max(shakeIntensity, intensity);
+            shakeDuration = Mathf.Max(shakeDuration, duration);
+            shakeTimer = shakeDuration;
         }
     }
 }

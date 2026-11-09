@@ -1,6 +1,9 @@
 using System;
 using UnityEngine;
 using ZeldaOoT.Combat;
+using ZeldaOoT.DekuTree;
+using ZeldaOoT.Inventory;
+using ZeldaOoT.VFX;
 
 namespace ZeldaOoT.Items
 {
@@ -9,7 +12,10 @@ namespace ZeldaOoT.Items
         None,
         Bow,
         Bomb,
-        Hookshot
+        Hookshot,
+        Slingshot,
+        DekuStick,
+        DekuNut
     }
 
     /// <summary>
@@ -57,6 +63,15 @@ namespace ZeldaOoT.Items
                 case ItemType.Bomb:
                     ThrowBomb(spawnPos, aimDir);
                     break;
+                case ItemType.Slingshot:
+                    FireSlingshot(spawnPos, aimDir);
+                    break;
+                case ItemType.DekuStick:
+                    UseDekuStick();
+                    break;
+                case ItemType.DekuNut:
+                    ThrowDekuNut(spawnPos, aimDir);
+                    break;
             }
 
             OnItemUsed?.Invoke(currentItem);
@@ -103,6 +118,66 @@ namespace ZeldaOoT.Items
             var bombComp = bombObj.AddComponent<BombItem>();
             Vector3 throwVel = (dir + Vector3.up * 0.45f).normalized * 9.5f;
             bombComp.Initialize(throwVel, gameObject);
+        }
+
+        private void FireSlingshot(Vector3 origin, Vector3 dir)
+        {
+            var inv = GetComponent<PlayerInventory>();
+            if (inv != null && inv.DekuSeeds <= 0) return;
+            if (inv != null) inv.DekuSeeds--;
+
+            SlingshotPellet.SpawnPellet(origin, dir, gameObject);
+        }
+
+        private void UseDekuStick()
+        {
+            var inv = GetComponent<PlayerInventory>();
+            if (inv != null && inv.DekuSticks <= 0) return;
+
+            // Spawn or swing stick
+            var existingStick = GetComponentInChildren<DekuStickWeapon>();
+            if (existingStick != null)
+            {
+                // Already holding stick, perform swing
+                return;
+            }
+
+            GameObject stickObj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            stickObj.name = "Held_Deku_Stick";
+            stickObj.transform.SetParent(itemSpawnSocket != null ? itemSpawnSocket : transform, false);
+            stickObj.transform.localPosition = new Vector3(0.3f, 0.2f, 0.4f);
+            stickObj.transform.localRotation = Quaternion.Euler(45f, 0f, 0f);
+            stickObj.transform.localScale = new Vector3(0.08f, 0.55f, 0.08f);
+
+            Shader s = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            Material wood = new Material(s) { color = new Color(0.45f, 0.28f, 0.12f) };
+            stickObj.GetComponent<MeshRenderer>().material = wood;
+
+            stickObj.AddComponent<DekuStickWeapon>();
+        }
+
+        private void ThrowDekuNut(Vector3 origin, Vector3 dir)
+        {
+            var inv = GetComponent<PlayerInventory>();
+            if (inv != null && inv.DekuNuts <= 0) return;
+            if (inv != null) inv.DekuNuts--;
+
+            // Flash effect stunning enemies in 8m radius
+            if (ZeldaVFXManager.Instance != null)
+            {
+                ZeldaVFXManager.Instance.PlaySpinWave(transform.position, 6.0f, 2);
+            }
+
+            Collider[] hits = Physics.OverlapSphere(origin, 8f);
+            foreach (var hit in hits)
+            {
+                if (hit.gameObject == gameObject) continue;
+                var dmg = hit.GetComponentInParent<IDamageable>();
+                if (dmg != null && dmg.IsAlive)
+                {
+                    dmg.TakeDamage(new DamageInfo(1f, hit.transform.position, Vector3.up, 4f, gameObject, false));
+                }
+            }
         }
     }
 }

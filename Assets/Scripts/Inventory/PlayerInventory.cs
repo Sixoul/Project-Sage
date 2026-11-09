@@ -31,6 +31,23 @@ namespace ZeldaOoT.Inventory
         public EquipmentData ActiveArmor { get; private set; }
         public EquipmentData ActiveItem { get; private set; }
 
+        // Ocarina of Time Economy & Key Progression
+        public int Rupees { get; private set; } = 0;
+        public int DekuSeeds { get; set; } = 30;
+        public int DekuSticks { get; set; } = 10;
+        public int DekuNuts { get; set; } = 20;
+
+        public bool HasKokiriSword { get; private set; } = false;
+        public bool HasDekuShield { get; private set; } = false;
+        public bool HasFairySlingshot { get; private set; } = false;
+        public bool HasDungeonMap { get; private set; } = false;
+        public bool HasCompass { get; private set; } = false;
+        public bool HasBossKey { get; private set; } = false;
+        public bool HasKokiriEmerald { get; private set; } = false;
+
+        public event Action<int> OnRupeesChanged;
+        public event Action<string> OnSpecialItemAcquired;
+
         public event Action<EquipmentData> OnWeaponChanged;
         public event Action<EquipmentData> OnBowChanged;
         public event Action<EquipmentData> OnShieldChanged;
@@ -425,6 +442,74 @@ namespace ZeldaOoT.Inventory
                 SafeDestroy(rivet.GetComponent<Collider>());
                 rivet.GetComponent<MeshRenderer>().material = steelMat;
             }
+        }
+
+        public void AddRupees(int amount)
+        {
+            Rupees = Mathf.Max(0, Rupees + amount);
+            OnRupeesChanged?.Invoke(Rupees);
+        }
+
+        public bool SpendRupees(int amount)
+        {
+            if (Rupees >= amount)
+            {
+                Rupees -= amount;
+                OnRupeesChanged?.Invoke(Rupees);
+                return true;
+            }
+            return false;
+        }
+
+        public void AwardSpecialItem(string id, string name)
+        {
+            switch (id.ToLower())
+            {
+                case "kokiri_sword":
+                    HasKokiriSword = true;
+                    // Find or create Kokiri Sword in weapons list
+                    var sword = Weapons.Find(w => w.id == "kokiri_sword");
+                    if (sword != null) EquipWeapon(sword);
+                    break;
+                case "deku_shield":
+                    HasDekuShield = true;
+                    var shield = Shields.Find(s => s.id == "deku_shield");
+                    if (shield != null) EquipShield(shield);
+                    break;
+                case "fairy_slingshot":
+                    HasFairySlingshot = true;
+                    DekuSeeds = Mathf.Max(DekuSeeds, 30);
+                    var itemSys = GetComponent<ItemSystem>();
+                    if (itemSys != null) itemSys.SetCurrentItem(ItemType.Bow); // Uses slingshot/bow targeting
+                    break;
+                case "dungeon_map":
+                    HasDungeonMap = true;
+                    break;
+                case "compass":
+                    HasCompass = true;
+                    break;
+                case "boss_key":
+                    HasBossKey = true;
+                    break;
+                case "kokiri_emerald":
+                    HasKokiriEmerald = true;
+                    break;
+            }
+
+            OnSpecialItemAcquired?.Invoke(id);
+        }
+
+        /// <summary>
+        /// Starts Link in authentic Ocarina of Time progression mode:
+        /// Unarms sword and shield so Link must explore Kokiri Forest to find Kokiri Sword and buy Deku Shield!
+        /// </summary>
+        public void SetOoTStartingMode()
+        {
+            Unequip(EquipmentCategory.Weapon);
+            Unequip(EquipmentCategory.Shield);
+            HasKokiriSword = false;
+            HasDekuShield = false;
+            Rupees = 5; // Starter pocket money
         }
     }
 }

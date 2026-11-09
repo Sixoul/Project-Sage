@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using ZeldaOoT.Combat;
 using ZeldaOoT.VFX;
+using ZeldaOoT.CameraRig;
 
 namespace ZeldaOoT.Items
 {
@@ -65,7 +66,23 @@ namespace ZeldaOoT.Items
 
         private void Explode()
         {
-            // Explosion visual particles
+            // Immediately hide mesh and disable collider so unexploded bomb model disappears on impact
+            if (meshRenderer != null) meshRenderer.enabled = false;
+            var col = GetComponent<Collider>();
+            if (col != null) col.enabled = false;
+
+            // Trigger distance-scaled camera shake
+            if (ZeldaCameraRig.Instance != null)
+            {
+                float distToCam = Vector3.Distance(transform.position, ZeldaCameraRig.Instance.transform.position);
+                float shakeFactor = Mathf.Clamp01(1f - (distToCam / 22f));
+                if (shakeFactor > 0.05f)
+                {
+                    ZeldaCameraRig.Instance.TriggerShake(shakeFactor * 0.5f, 0.38f);
+                }
+            }
+
+            // Explosion visual particles, dynamic point light, shockwave, smoke, and scorch mark
             if (ZeldaVFXManager.Instance != null)
             {
                 ZeldaVFXManager.Instance.PlayBombExplosion(transform.position);
