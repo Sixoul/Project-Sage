@@ -133,18 +133,18 @@ namespace ZeldaOoT.Kokiri
             BuildMidosGate(worldRoot.transform, gatePos, woodMat);
 
             // =========================================================================
-            // 9. DEKU BABA FOREST TUNNEL
+            // 9. THE FOREST GORGE & HOLLOW LOG TUNNELS (Z = 28 to 86)
             // =========================================================================
-            BuildDekuBabaPath(worldRoot.transform, new Vector3(0f, 0f, 42f), barkMat, leafMat);
+            BuildDekuBabaPath(worldRoot.transform, barkMat, leafMat, stoneMat, pathMat, grassMat, waterMat, woodMat);
 
             // =========================================================================
-            // 10. THE GREAT DEKU TREE CLEARING & DUNGEON ENTRANCE
+            // 10. THE GREAT DEKU TREE SACRED MEADOW & COLOSSAL EXTERIOR (Z = 86 to 145)
             // =========================================================================
-            Vector3 dekuTreePos = new Vector3(0f, 0f, 85f);
-            BuildGreatDekuTreeExterior(worldRoot.transform, dekuTreePos, barkMat, leafMat);
+            Vector3 dekuTreePos = new Vector3(0f, 0f, 115f);
+            BuildGreatDekuTreeExterior(worldRoot.transform, dekuTreePos, barkMat, leafMat, stoneMat, waterMat);
 
             // =========================================================================
-            // 11. DUNGEON INTERIOR: "INSIDE THE GREAT DEKU TREE"
+            // 11. DUNGEON INTERIOR: "INSIDE THE GREAT DEKU TREE" (Z = 115)
             // =========================================================================
             Vector3 dungeonPos = new Vector3(0f, 0f, 115f);
             GreatDekuTreeDungeonBuilder.BuildDungeon(dungeonPos).transform.SetParent(worldRoot.transform, true);
@@ -201,6 +201,14 @@ namespace ZeldaOoT.Kokiri
             for (int i = 0; i < count; i++)
             {
                 float a = i * Mathf.PI * 2f / count;
+                float deg = a * Mathf.Rad2Deg;
+
+                // Leave open gap on North side (towards Z = +45) for the Forest Path to the Great Deku Tree!
+                if (Mathf.Abs(Mathf.DeltaAngle(deg, 90f)) < 26f)
+                {
+                    continue;
+                }
+
                 Vector3 p = new Vector3(Mathf.Cos(a) * radius, 0f, Mathf.Sin(a) * radius);
 
                 // Large ancient tree trunk
@@ -480,62 +488,281 @@ namespace ZeldaOoT.Kokiri
             mido.GetComponent<MidoGatekeeper>().SetGateBarrier(barrier.transform);
         }
 
-        private static void BuildDekuBabaPath(Transform parent, Vector3 pos, Material barkMat, Material leafMat)
+        private static GameObject BuildHollowLogTunnel(Transform parent, Vector3 center, float length, float radius, Material barkMat, Material woodMat)
         {
-            GameObject pathRoot = new GameObject("DekuBaba_Forest_Tunnel");
-            pathRoot.transform.SetParent(parent, false);
-            pathRoot.transform.localPosition = pos;
+            GameObject tunnelRoot = new GameObject("Hollow_Log_Tunnel");
+            tunnelRoot.transform.SetParent(parent, false);
+            tunnelRoot.transform.localPosition = center;
 
-            // Guarding Deku Babas along the path!
+            int segments = 12;
+            float chord = 2f * radius * Mathf.Sin(Mathf.PI / segments) * 1.08f;
+            float thickness = 0.5f;
+
+            for (int i = 0; i < segments; i++)
+            {
+                float angle = i * Mathf.PI * 2f / segments;
+                float x = Mathf.Cos(angle) * radius;
+                float y = Mathf.Sin(angle) * radius + radius + 0.15f;
+
+                GameObject seg = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                seg.name = $"Log_Segment_{i}";
+                seg.transform.SetParent(tunnelRoot.transform, false);
+                seg.transform.localPosition = new Vector3(x, y, 0f);
+                seg.transform.localRotation = Quaternion.Euler(0f, 0f, -angle * Mathf.Rad2Deg + 90f);
+                seg.transform.localScale = new Vector3(chord, thickness, length);
+                seg.GetComponent<MeshRenderer>().material = barkMat;
+            }
+
+            // Internal walking deck
+            GameObject walkFloor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            walkFloor.name = "Log_Walkway";
+            walkFloor.transform.SetParent(tunnelRoot.transform, false);
+            walkFloor.transform.localPosition = new Vector3(0f, 0.15f, 0f);
+            walkFloor.transform.localScale = new Vector3(radius * 1.4f, 0.25f, length);
+            walkFloor.GetComponent<MeshRenderer>().material = woodMat;
+
+            // Decorative root arches at entrance & exit
+            for (int end = -1; end <= 1; end += 2)
+            {
+                GameObject rootArch = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                rootArch.name = end < 0 ? "Log_Root_Arch_Front" : "Log_Root_Arch_Back";
+                rootArch.transform.SetParent(tunnelRoot.transform, false);
+                rootArch.transform.localPosition = new Vector3(0f, radius + 0.15f, end * (length * 0.5f));
+                rootArch.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                rootArch.transform.localScale = new Vector3((radius + 0.6f) * 2f, 0.6f, (radius + 0.6f) * 2f);
+                rootArch.GetComponent<MeshRenderer>().material = barkMat;
+            }
+
+            return tunnelRoot;
+        }
+
+        private static void BuildDekuBabaPath(Transform parent, Material barkMat, Material leafMat, Material stoneMat, Material pathMat, Material grassMat, Material waterMat, Material woodMat)
+        {
+            GameObject pathRoot = new GameObject("DekuBaba_Forest_Gorge");
+            pathRoot.transform.SetParent(parent, false);
+
+            // 1. Solid Ground Floor for entire gorge (Z = 28 to 86, length 58m, width 18m)
+            GameObject pathFloor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            pathFloor.name = "Gorge_Ground_Floor";
+            pathFloor.transform.SetParent(pathRoot.transform, false);
+            pathFloor.transform.localPosition = new Vector3(0f, -0.5f, 57f);
+            pathFloor.transform.localScale = new Vector3(18f, 1f, 58f);
+            pathFloor.GetComponent<MeshRenderer>().material = grassMat;
+
+            // 2. High Mossy Cliff Canyon Walls on Left & Right
+            for (int side = -1; side <= 1; side += 2)
+            {
+                GameObject cliff = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                cliff.name = side < 0 ? "Gorge_Cliff_West" : "Gorge_Cliff_East";
+                cliff.transform.SetParent(pathRoot.transform, false);
+                cliff.transform.localPosition = new Vector3(side * 8.5f, 4f, 57f);
+                cliff.transform.localScale = new Vector3(2.5f, 8f, 58f);
+                cliff.GetComponent<MeshRenderer>().material = stoneMat;
+
+                // Towering trees planted along the cliff crest
+                for (float z = 33f; z <= 81f; z += 12f)
+                {
+                    GameObject cliffTree = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                    cliffTree.name = "Cliff_Canopy_Tree";
+                    cliffTree.transform.SetParent(pathRoot.transform, false);
+                    cliffTree.transform.localPosition = new Vector3(side * 9.5f, 10f, z);
+                    cliffTree.transform.localScale = new Vector3(3.5f, 8f, 3.5f);
+                    cliffTree.GetComponent<MeshRenderer>().material = barkMat;
+
+                    GameObject canopy = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                    canopy.transform.SetParent(cliffTree.transform, false);
+                    canopy.transform.localPosition = new Vector3(0f, 1.1f, 0f);
+                    canopy.transform.localScale = new Vector3(2.2f, 1.4f, 2.2f);
+                    canopy.GetComponent<MeshRenderer>().material = leafMat;
+                }
+            }
+
+            // 3. Hollow Log Tunnel 1 (Village exit -> Gorge entrance, Z = 30 to 42)
+            BuildHollowLogTunnel(pathRoot.transform, new Vector3(0f, 0f, 36f), 12f, 3.2f, barkMat, woodMat);
+
+            // 4. Winding Dirt Trail through the gorge (Z = 42 to 78)
+            CreatePath(pathRoot.transform, new Vector3(0f, 0.02f, 45f), new Vector3(5f, 0.05f, 8f), pathMat);
+            CreatePath(pathRoot.transform, new Vector3(-1.8f, 0.02f, 53f), new Vector3(5.5f, 0.05f, 9f), pathMat);
+            CreatePath(pathRoot.transform, new Vector3(1.5f, 0.02f, 62f), new Vector3(5.5f, 0.05f, 10f), pathMat);
+            CreatePath(pathRoot.transform, new Vector3(-1.0f, 0.02f, 71f), new Vector3(5f, 0.05f, 9f), pathMat);
+            CreatePath(pathRoot.transform, new Vector3(0f, 0.02f, 77f), new Vector3(5f, 0.05f, 6f), pathMat);
+
+            // 5. Trickling Forest Brook & Wooden Footbridge at Z = 59
+            GameObject brook = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            brook.name = "Gorge_Forest_Brook";
+            brook.transform.SetParent(pathRoot.transform, false);
+            brook.transform.localPosition = new Vector3(0f, 0.05f, 59f);
+            brook.transform.localScale = new Vector3(14f, 0.15f, 3.5f);
+            brook.GetComponent<MeshRenderer>().material = waterMat;
+
+            // Wooden footbridge planks across brook
+            GameObject bridge = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            bridge.name = "Gorge_Log_Bridge";
+            bridge.transform.SetParent(pathRoot.transform, false);
+            bridge.transform.localPosition = new Vector3(0.5f, 0.22f, 59f);
+            bridge.transform.localScale = new Vector3(4.2f, 0.2f, 4.2f);
+            bridge.GetComponent<MeshRenderer>().material = woodMat;
+
+            // 6. Guarding Deku Babas (4 encounters along the winding path)
             Vector3[] babaPositions = new Vector3[]
             {
-                pathRoot.transform.position + new Vector3(-3.2f, 0f, 4f),
-                pathRoot.transform.position + new Vector3(3.5f, 0f, 12f),
-                pathRoot.transform.position + new Vector3(-2.8f, 0f, 20f)
+                new Vector3(-2.8f, 0f, 49f),
+                new Vector3(3.2f, 0f, 54f),
+                new Vector3(2.6f, 0f, 65f),
+                new Vector3(-2.8f, 0f, 72f)
             };
 
             foreach (var bPos in babaPositions)
             {
                 DekuBabaAI.CreateDekuBaba(bPos).transform.SetParent(pathRoot.transform, true);
             }
+
+            // 7. Cuttable Grass Clumps with hidden Rupees along gorge trail
+            Vector3[] grassLocs = new Vector3[]
+            {
+                new Vector3(-3.8f, 0f, 46f),
+                new Vector3(3.6f, 0f, 51f),
+                new Vector3(-3.5f, 0f, 63f),
+                new Vector3(3.8f, 0f, 68f),
+                new Vector3(-3.2f, 0f, 75f)
+            };
+
+            foreach (var gLoc in grassLocs)
+            {
+                GrassPatch.CreateGrassPatch(gLoc, grassMat).transform.SetParent(pathRoot.transform, true);
+            }
+
+            // 8. Hollow Log Tunnel 2 (Gorge exit -> Sacred Meadow, Z = 80 to 92)
+            BuildHollowLogTunnel(pathRoot.transform, new Vector3(0f, 0f, 86f), 12f, 3.4f, barkMat, woodMat);
         }
 
-        private static void BuildGreatDekuTreeExterior(Transform parent, Vector3 pos, Material barkMat, Material leafMat)
+        private static void BuildGreatDekuTreeExterior(Transform parent, Vector3 pos, Material barkMat, Material leafMat, Material stoneMat, Material waterMat)
         {
-            GameObject treeRoot = new GameObject("The_Great_Deku_Tree_Exterior");
-            treeRoot.transform.SetParent(parent, false);
-            treeRoot.transform.localPosition = pos;
+            GameObject clearingRoot = new GameObject("The_Great_Deku_Tree_Clearing");
+            clearingRoot.transform.SetParent(parent, false);
+            clearingRoot.transform.localPosition = pos; // pos = (0, 0, 115)
 
             Shader s = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
 
-            // Colossal Trunk (Radius 16m, Height 35m)
+            // 1. Lush Green Meadow Floor (radius 30m, centered at pos)
+            GameObject meadowFloor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            meadowFloor.name = "DekuTree_Meadow_Floor";
+            meadowFloor.transform.SetParent(clearingRoot.transform, false);
+            meadowFloor.transform.localPosition = new Vector3(0f, -0.5f, 0f);
+            meadowFloor.transform.localScale = new Vector3(64f, 1f, 64f);
+            meadowFloor.GetComponent<MeshRenderer>().material = new Material(s) { color = new Color(0.18f, 0.44f, 0.16f) };
+
+            // 2. Circular Ring of Colossal Ancient Trees enclosing the Sacred Meadow (Radius 28m)
+            int clearingTreeCount = 20;
+            for (int i = 0; i < clearingTreeCount; i++)
+            {
+                float a = i * Mathf.PI * 2f / clearingTreeCount;
+                float deg = a * Mathf.Rad2Deg;
+
+                // Leave open gap on South side (around -90 degrees, Z = -28) where Tunnel 2 enters!
+                if (Mathf.Abs(Mathf.DeltaAngle(deg, -90f)) < 26f)
+                {
+                    continue;
+                }
+
+                Vector3 p = new Vector3(Mathf.Cos(a) * 28f, 0f, Mathf.Sin(a) * 28f);
+
+                GameObject tree = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                tree.name = $"Sacred_Grove_Tree_{i}";
+                tree.transform.SetParent(clearingRoot.transform, false);
+                tree.transform.localPosition = p + Vector3.up * 10f;
+                tree.transform.localScale = new Vector3(5.5f, 10f, 5.5f);
+                tree.GetComponent<MeshRenderer>().material = barkMat;
+
+                GameObject canopy = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                canopy.name = "Tree_Canopy";
+                canopy.transform.SetParent(tree.transform, false);
+                canopy.transform.localPosition = new Vector3(0f, 1.15f, 0f);
+                canopy.transform.localScale = new Vector3(2.4f, 1.5f, 2.4f);
+                canopy.GetComponent<MeshRenderer>().material = leafMat;
+            }
+
+            // 3. Stone Flagstone Approach Walkway (From Tunnel 2 exit at Z = -23 to Deku Tree base at Z = -14)
+            GameObject walkway = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            walkway.name = "Sacred_Flagstone_Walkway";
+            walkway.transform.SetParent(clearingRoot.transform, false);
+            walkway.transform.localPosition = new Vector3(0f, 0.05f, -18.5f);
+            walkway.transform.localScale = new Vector3(6f, 0.1f, 11f);
+            walkway.GetComponent<MeshRenderer>().material = stoneMat;
+
+            // 4. Two Sacred Reflection Pools on Left & Right
+            for (int side = -1; side <= 1; side += 2)
+            {
+                GameObject pool = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                pool.name = side < 0 ? "Reflection_Pool_West" : "Reflection_Pool_East";
+                pool.transform.SetParent(clearingRoot.transform, false);
+                pool.transform.localPosition = new Vector3(side * 14f, 0.05f, -16f);
+                pool.transform.localScale = new Vector3(11f, 0.15f, 11f);
+                pool.GetComponent<MeshRenderer>().material = waterMat;
+
+                // Pool ambient fairy light
+                GameObject pLight = new GameObject("Pool_Fairy_Light");
+                pLight.transform.SetParent(pool.transform, false);
+                pLight.transform.localPosition = new Vector3(0f, 3f, 0f);
+                Light pl = pLight.AddComponent<Light>();
+                pl.type = LightType.Point;
+                pl.color = new Color(0.3f, 0.85f, 1f);
+                pl.intensity = 2.5f;
+                pl.range = 8f;
+            }
+
+            // 5. Floating Fae Fireflies in the Sacred Meadow
+            Vector3[] fairyMotes = new Vector3[]
+            {
+                new Vector3(-6f, 1.8f, -12f),
+                new Vector3(6f, 2.2f, -14f),
+                new Vector3(-8f, 1.5f, -22f),
+                new Vector3(7f, 2.0f, -20f)
+            };
+
+            for (int f = 0; f < fairyMotes.Length; f++)
+            {
+                GameObject mote = new GameObject($"Forest_Fae_Mote_{f}");
+                mote.transform.SetParent(clearingRoot.transform, false);
+                mote.transform.localPosition = fairyMotes[f];
+                Light ml = mote.AddComponent<Light>();
+                ml.type = LightType.Point;
+                ml.color = new Color(1f, 0.9f, 0.4f);
+                ml.intensity = 2f;
+                ml.range = 5f;
+            }
+
+            // =========================================================================
+            // 6. THE COLOSSAL GREAT DEKU TREE
+            // =========================================================================
+            // Colossal Trunk (Radius 14m, Height 35m)
             GameObject trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             trunk.name = "DekuTree_Colossal_Trunk";
-            trunk.transform.SetParent(treeRoot.transform, false);
+            trunk.transform.SetParent(clearingRoot.transform, false);
             trunk.transform.localPosition = new Vector3(0f, 17.5f, 0f);
             trunk.transform.localScale = new Vector3(28f, 17.5f, 28f);
             trunk.GetComponent<MeshRenderer>().material = barkMat;
 
             // Majestic Leaf Canopy
-            GameObject canopy = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            canopy.name = "DekuTree_Majestic_Canopy";
-            canopy.transform.SetParent(treeRoot.transform, false);
-            canopy.transform.localPosition = new Vector3(0f, 36f, 0f);
-            canopy.transform.localScale = new Vector3(45f, 18f, 45f);
-            canopy.GetComponent<MeshRenderer>().material = leafMat;
+            GameObject canopyObj = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            canopyObj.name = "DekuTree_Majestic_Canopy";
+            canopyObj.transform.SetParent(clearingRoot.transform, false);
+            canopyObj.transform.localPosition = new Vector3(0f, 37f, 0f);
+            canopyObj.transform.localScale = new Vector3(48f, 18f, 48f);
+            canopyObj.GetComponent<MeshRenderer>().material = leafMat;
 
-            // Carved Wooden Face on South side
+            // Carved Wooden Face on South side (Z = -14.2f)
             // Eyes
             Material eyeMat = new Material(s);
             eyeMat.color = new Color(0.95f, 0.85f, 0.2f);
             eyeMat.EnableKeyword("_EMISSION");
-            eyeMat.SetColor("_EmissionColor", new Color(0.95f, 0.85f, 0.2f) * 1.5f);
+            eyeMat.SetColor("_EmissionColor", new Color(0.95f, 0.85f, 0.2f) * 2f);
 
             for (int e = -1; e <= 1; e += 2)
             {
                 GameObject eye = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 eye.name = e < 0 ? "Deku_Eye_L" : "Deku_Eye_R";
-                eye.transform.SetParent(treeRoot.transform, false);
+                eye.transform.SetParent(clearingRoot.transform, false);
                 eye.transform.localPosition = new Vector3(e * 5.5f, 16.5f, -14.2f);
                 eye.transform.localScale = new Vector3(2.5f, 1.8f, 1.2f);
                 eye.GetComponent<MeshRenderer>().material = eyeMat;
@@ -544,28 +771,28 @@ namespace ZeldaOoT.Kokiri
             // Mustache & Nose
             GameObject mustache = GameObject.CreatePrimitive(PrimitiveType.Cube);
             mustache.name = "Deku_Mustache";
-            mustache.transform.SetParent(treeRoot.transform, false);
+            mustache.transform.SetParent(clearingRoot.transform, false);
             mustache.transform.localPosition = new Vector3(0f, 11.5f, -14.5f);
             mustache.transform.localScale = new Vector3(12f, 1.8f, 2.2f);
             mustache.GetComponent<MeshRenderer>().material = barkMat;
 
-            // Hollow Entrance Mouth leading inside
+            // Colossal Hollow Mouth Entrance leading directly inside to 1F!
             GameObject mouthHole = GameObject.CreatePrimitive(PrimitiveType.Cube);
             mouthHole.name = "Deku_Mouth_Entrance";
-            mouthHole.transform.SetParent(treeRoot.transform, false);
-            mouthHole.transform.localPosition = new Vector3(0f, 4.5f, -14.5f);
-            mouthHole.transform.localScale = new Vector3(8f, 8f, 3.5f);
-            Material darkHollow = new Material(s) { color = Color.black };
+            mouthHole.transform.SetParent(clearingRoot.transform, false);
+            mouthHole.transform.localPosition = new Vector3(0f, 4.5f, -14.2f);
+            mouthHole.transform.localScale = new Vector3(7.5f, 7.5f, 2.5f);
+            Material darkHollow = new Material(s) { color = new Color(0.08f, 0.05f, 0.03f) };
             mouthHole.GetComponent<MeshRenderer>().material = darkHollow;
             mouthHole.GetComponent<Collider>().isTrigger = true;
 
-            // Greeting Speech Trigger
-            var speechTrigger = treeRoot.AddComponent<BoxCollider>();
+            // Greeting Speech Trigger (Z = -20f covers the approach path)
+            var speechTrigger = clearingRoot.AddComponent<BoxCollider>();
             speechTrigger.isTrigger = true;
-            speechTrigger.center = new Vector3(0f, 3f, -22f);
-            speechTrigger.size = new Vector3(22f, 6f, 14f);
+            speechTrigger.center = new Vector3(0f, 3f, -20f);
+            speechTrigger.size = new Vector3(18f, 6f, 14f);
 
-            treeRoot.AddComponent<DekuTreeGreetingTrigger>();
+            clearingRoot.AddComponent<DekuTreeGreetingTrigger>();
         }
 
         private static void SetupForestLighting(Transform parent)

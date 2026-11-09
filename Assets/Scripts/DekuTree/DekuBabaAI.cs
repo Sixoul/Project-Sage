@@ -20,10 +20,17 @@ namespace ZeldaOoT.DekuTree
 
         private float currentHealth;
         private Transform playerTarget;
-        private Transform headTransform;
-        private Vector3 headOriginPos;
+        [SerializeField] private Transform headTransform;
+        [SerializeField] private Vector3 headOriginPos;
         private bool isLunging = false;
         private float lungeTimer = 0f;
+
+        private static void SafeDestroy(Object obj)
+        {
+            if (obj == null) return;
+            if (Application.isPlaying) Destroy(obj);
+            else DestroyImmediate(obj);
+        }
 
         public static GameObject CreateDekuBaba(Vector3 position)
         {
@@ -42,7 +49,7 @@ namespace ZeldaOoT.DekuTree
             stem.transform.localPosition = new Vector3(0f, 0.5f, 0f);
             stem.transform.localScale = new Vector3(0.18f, 0.5f, 0.18f);
             stem.GetComponent<MeshRenderer>().material = stemMat;
-            Destroy(stem.GetComponent<Collider>());
+            SafeDestroy(stem.GetComponent<Collider>());
 
             // Head bulb
             GameObject head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -51,7 +58,7 @@ namespace ZeldaOoT.DekuTree
             head.transform.localPosition = new Vector3(0f, 1.1f, 0.2f);
             head.transform.localScale = new Vector3(0.65f, 0.55f, 0.85f);
             head.GetComponent<MeshRenderer>().material = headMat;
-            Destroy(head.GetComponent<Collider>());
+            SafeDestroy(head.GetComponent<Collider>());
 
             // Jaws
             GameObject upperJaw = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -60,7 +67,7 @@ namespace ZeldaOoT.DekuTree
             upperJaw.transform.localPosition = new Vector3(0f, 0.15f, 0.35f);
             upperJaw.transform.localScale = new Vector3(0.7f, 0.2f, 0.5f);
             upperJaw.GetComponent<MeshRenderer>().material = jawMat;
-            Destroy(upperJaw.GetComponent<Collider>());
+            SafeDestroy(upperJaw.GetComponent<Collider>());
 
             // Hitbox Collider & LockOn
             var col = babaRoot.AddComponent<CapsuleCollider>();
@@ -80,6 +87,15 @@ namespace ZeldaOoT.DekuTree
         private void Start()
         {
             currentHealth = maxHealth;
+            if (headTransform == null)
+            {
+                var h = transform.Find("Baba_Head");
+                if (h != null)
+                {
+                    headTransform = h;
+                    headOriginPos = h.localPosition;
+                }
+            }
             var p = GameObject.FindWithTag("Player");
             if (p != null) playerTarget = p.transform;
         }
