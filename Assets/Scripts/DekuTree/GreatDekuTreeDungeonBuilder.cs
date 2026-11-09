@@ -226,7 +226,7 @@ namespace ZeldaOoT.DekuTree
 
             // Treasure Chest with Dungeon Map!
             Vector3 chestP = room.transform.position + new Vector3(4.5f, 0.3f, 0f);
-            OoTChest.CreateChest(chestP, Quaternion.Euler(0f, -90f, 0f), "dungeon_map", "Dungeon Map", "You got the Dungeon Map! Press M to view the layout of the Great Deku Tree!", Color.yellow);
+            OoTChest.CreateChest(chestP, Quaternion.Euler(0f, -90f, 0f), "dungeon_map", "Dungeon Map", "You got the Dungeon Map! Press M to view the layout of the Great Deku Tree!", Color.yellow).transform.SetParent(room.transform, true);
         }
 
         private static void BuildSlingshotRoom(Transform parent, Vector3 center, Material woodMat, Material metalMat, Material stoneMat)
@@ -261,11 +261,11 @@ namespace ZeldaOoT.DekuTree
 
             // Eye Switch mounted above opposite wall
             Vector3 eyeP = room.transform.position + new Vector3(-8.2f, 4.5f, 0f);
-            EyeSwitch.CreateEyeSwitch(eyeP, Quaternion.Euler(0f, 90f, 0f), bars, null);
+            EyeSwitch.CreateEyeSwitch(eyeP, Quaternion.Euler(0f, 90f, 0f), bars, null).transform.SetParent(room.transform, true);
 
             // Treasure Chest containing the Fairy Slingshot!
             Vector3 chestP = room.transform.position + new Vector3(-4.5f, 0.3f, 0f);
-            OoTChest.CreateChest(chestP, Quaternion.Euler(0f, 90f, 0f), "fairy_slingshot", "Fairy Slingshot", "You found the Fairy Slingshot! Use Deku Seeds as ammunition to hit targets and switches from afar!", new Color(0.85f, 0.75f, 0.2f));
+            OoTChest.CreateChest(chestP, Quaternion.Euler(0f, 90f, 0f), "fairy_slingshot", "Fairy Slingshot", "You found the Fairy Slingshot! Use Deku Seeds as ammunition to hit targets and switches from afar!", new Color(0.85f, 0.75f, 0.2f)).transform.SetParent(room.transform, true);
         }
 
         private static void BuildBasement1(Transform parent, Vector3 center, float radius, Material waterMat, Material stoneMat, Material sandMat, Material woodMat)
@@ -319,11 +319,11 @@ namespace ZeldaOoT.DekuTree
 
             // Vines on South wall to climb back up to 1F
             Vector3 vineBackP = b1Root.transform.position + new Vector3(0f, 5.5f, -radius + 1.2f);
-            ClimbableVine.CreateVine(vineBackP, new Vector3(3.5f, 9.5f, 1f), Quaternion.Euler(0f, 0f, 0f), 0f);
+            ClimbableVine.CreateVine(vineBackP, new Vector3(3.5f, 9.5f, 1f), Quaternion.Euler(0f, 0f, 0f), 0f).transform.SetParent(b1Root.transform, true);
 
             // Lit Torch (Fire source for Deku Stick!)
             Vector3 litTorchP = b1Root.transform.position + new Vector3(-4.5f, 0.65f, 0f);
-            TorchSwitchPuzzle.CreateTorch(litTorchP, true, null);
+            TorchSwitchPuzzle.CreateTorch(litTorchP, true, null).transform.SetParent(b1Root.transform, true);
 
             // Unlit Torch across water on North platform
             Vector3 unlitTorchP = b1Root.transform.position + new Vector3(4.5f, 0.65f, 4.5f);
@@ -334,11 +334,11 @@ namespace ZeldaOoT.DekuTree
             doorBarsToB2.transform.localScale = new Vector3(4f, 4.5f, 0.5f);
             doorBarsToB2.GetComponent<MeshRenderer>().material = stoneMat;
 
-            TorchSwitchPuzzle.CreateTorch(unlitTorchP, false, doorBarsToB2);
+            TorchSwitchPuzzle.CreateTorch(unlitTorchP, false, doorBarsToB2).transform.SetParent(b1Root.transform, true);
 
             // Spider Web blocking North passage
             Vector3 webDoorP = b1Root.transform.position + new Vector3(0f, 1.8f, radius + 2f);
-            SpiderWebObstacle.CreateWeb(webDoorP, new Vector3(4f, 4f, 1f), Quaternion.Euler(0f, 0f, 0f), false);
+            SpiderWebObstacle.CreateWeb(webDoorP, new Vector3(4f, 4f, 1f), Quaternion.Euler(0f, 0f, 0f), false).transform.SetParent(b1Root.transform, true);
         }
 
         private static void BuildBasement2(Transform parent, Vector3 center, Material stoneMat, Material metalMat, Material woodMat)
